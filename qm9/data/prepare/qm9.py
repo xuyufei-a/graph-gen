@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import shutil
 
 import logging
 import os
@@ -11,6 +12,8 @@ import urllib.request
 from qm9.data.prepare.process import process_xyz_files, process_xyz_gdb9
 from qm9.data.prepare.utils import download_data, is_int, cleanup_file
 
+# download manually?
+download_flag = False
 
 def download_dataset_qm9(datadir, dataname, splits=None, calculate_thermo=True, exclude=True, cleanup=True):
     """
@@ -18,6 +21,7 @@ def download_dataset_qm9(datadir, dataname, splits=None, calculate_thermo=True, 
     """
     # Define directory for which data will be output.
     gdb9dir = join(*[datadir, dataname])
+    # print(gdb9dir, os.path.abspath(gdb9dir))
 
     # Important to avoid a race condition
     os.makedirs(gdb9dir, exist_ok=True)
@@ -32,7 +36,9 @@ def download_dataset_qm9(datadir, dataname, splits=None, calculate_thermo=True, 
     # gdb9_tar_data =
     # tardata = tarfile.open(gdb9_tar_file, 'r')
     # files = tardata.getmembers()
-    urllib.request.urlretrieve(gdb9_url_data, filename=gdb9_tar_data)
+
+    if download_flag:
+        urllib.request.urlretrieve(gdb9_url_data, filename=gdb9_tar_data)
     logging.info('GDB9 dataset downloaded successfully!')
 
     # If splits are not specified, automatically generate them.
@@ -82,7 +88,11 @@ def gen_splits_gdb9(gdb9dir, cleanup=True):
     logging.info('Splits were not specified! Automatically generating.')
     gdb9_url_excluded = 'https://springernature.figshare.com/ndownloader/files/3195404'
     gdb9_txt_excluded = join(gdb9dir, 'uncharacterized.txt')
-    urllib.request.urlretrieve(gdb9_url_excluded, filename=gdb9_txt_excluded)
+    
+    if download_flag:
+        urllib.request.urlretrieve(gdb9_url_excluded, filename=gdb9_txt_excluded)
+    else:
+        shutil.copyfile(gdb9_txt_excluded + ".tmp", gdb9_txt_excluded)
 
     # First get list of excluded indices
     excluded_strings = []
@@ -144,10 +154,14 @@ def get_thermo_dict(gdb9dir, cleanup=True):
     """
     # Download thermochemical energy
     logging.info('Downloading thermochemical energy.')
+
     gdb9_url_thermo = 'https://springernature.figshare.com/ndownloader/files/3195395'
     gdb9_txt_thermo = join(gdb9dir, 'atomref.txt')
 
-    urllib.request.urlretrieve(gdb9_url_thermo, filename=gdb9_txt_thermo)
+    if download_flag:
+        urllib.request.urlretrieve(gdb9_url_thermo, filename=gdb9_txt_thermo)
+    else:
+        shutil.copyfile(gdb9_txt_thermo + ".tmp", gdb9_txt_thermo)
 
     # Loop over file of thermochemical energies
     therm_targets = ['zpve', 'U0', 'U', 'H', 'G', 'Cv']
@@ -213,7 +227,7 @@ def get_unique_charges(charges):
     Get count of each charge for each molecule.
     """
     # Create a dictionary of charges
-    charge_counts = {z: np.zeros(len(charges), dtype=np.int)
+    charge_counts = {z: np.zeros(len(charges), dtype=np.int32)
                      for z in np.unique(charges)}
     print(charge_counts.keys())
 
