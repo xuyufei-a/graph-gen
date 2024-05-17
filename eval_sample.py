@@ -48,7 +48,10 @@ def save_and_sample_chain(args, eval_args, device, flow,
 
 def sample_different_sizes_and_save(args, eval_args, device, generative_model,
                                     nodes_dist, dataset_info, n_samples=10):
+    # nodes_list: qm9.models.DistributionNodes
+
     nodesxsample = nodes_dist.sample(n_samples)
+    
     one_hot, charges, x, node_mask = sample(
         args, device, generative_model, dataset_info,
         nodesxsample=nodesxsample)
@@ -144,20 +147,20 @@ def main():
         args, eval_args, device, flow, nodes_dist,
         dataset_info=dataset_info, n_samples=30)
 
-    print('Sampling stable molecules.')
-    sample_only_stable_different_sizes_and_save(
-        args, eval_args, device, flow, nodes_dist,
-        dataset_info=dataset_info, n_samples=10, n_tries=2*10)
-    print('Visualizing molecules.')
-    vis.visualize(
-        join(eval_args.model_path, 'eval/molecules/'), dataset_info,
-        max_num=100, spheres_3d=True)
+    # print('Sampling stable molecules.')
+    # sample_only_stable_different_sizes_and_save(
+    #     args, eval_args, device, flow, nodes_dist,
+    #     dataset_info=dataset_info, n_samples=10, n_tries=2*10)
+    # print('Visualizing molecules.')
+    # vis.visualize(
+    #     join(eval_args.model_path, 'eval/molecules/'), dataset_info,
+    #     max_num=100, spheres_3d=True)
 
-    print('Sampling visualization chain.')
-    save_and_sample_chain(
-        args, eval_args, device, flow,
-        n_tries=eval_args.n_tries, n_nodes=eval_args.n_nodes,
-        dataset_info=dataset_info)
+    # print('Sampling visualization chain.')
+    # save_and_sample_chain(
+    #     args, eval_args, device, flow,
+    #     n_tries=eval_args.n_tries, n_nodes=eval_args.n_nodes,
+    #     dataset_info=dataset_info)
 
 
 if __name__ == "__main__":

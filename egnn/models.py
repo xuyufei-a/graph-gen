@@ -97,6 +97,8 @@ class EGNN_dynamics_QM9(nn.Module):
 
         vel = vel.view(bs, n_nodes, -1)
 
+        #TODO
+        # print(vel.abs().max())
         if torch.any(torch.isnan(vel)):
             print('Warning: detected nan, resetting EGNN output to zero.')
             vel = torch.zeros_like(vel)
@@ -106,6 +108,14 @@ class EGNN_dynamics_QM9(nn.Module):
         else:
             vel = remove_mean_with_mask(vel, node_mask.view(bs, n_nodes, 1))
 
+        #TODO: modify
+        # print(vel.abs().max())
+        # norm = vel.abs().max().item()
+        #TODO: display
+        # print(norm)
+        # print(vel.shape, x.shape, norm)
+        # if norm > 1:
+        #     vel = vel / norm
         if h_dims == 0:
             return vel
         else:

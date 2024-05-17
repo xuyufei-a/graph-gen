@@ -63,8 +63,17 @@ def initialize_datasets(args, datadir, dataset, subset=None, splits=None,
     datasets = {}
     for split, datafile in datafiles.items():
         with np.load(datafile) as f:
+            # TODO: data load
+            # datasets[split] = {key: torch.from_numpy(
+                # val) if key != "SLIMES" else val for key, val in f.items()}
             datasets[split] = {key: torch.from_numpy(
                 val) for key, val in f.items()}
+            
+            # TODO: display data load
+            # for key, val in f.items():
+            #     print(key, val)
+            # exit()
+            
 
     if dataset != 'qm9':
         np.random.seed(42)

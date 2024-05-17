@@ -97,8 +97,13 @@ def process_xyz_files(data, process_file_fn, file_ext=None, file_idx_list=None, 
     molecules = {prop: [mol[prop] for mol in molecules] for prop in props}
 
     # If stacking is desireable, pad and then stack.
+
+    # TODO: data load
+
+    # tmp = molecules.pop("SLIMES")
     if stack:
         molecules = {key: pad_sequence(val, batch_first=True) if val[0].dim() > 0 else torch.stack(val) for key, val in molecules.items()}
+    # molecules["SLIMES"] = tmp
 
     return molecules
 
@@ -177,11 +182,12 @@ def process_xyz_gdb9(datafile):
     TODO : Replace breakpoint with a more informative failure?
     """
     xyz_lines = [line.decode('UTF-8') for line in datafile.readlines()]
-
+    
     num_atoms = int(xyz_lines[0])
     mol_props = xyz_lines[1].split()
     mol_xyz = xyz_lines[2:num_atoms+2]
     mol_freq = xyz_lines[num_atoms+2]
+    mol_SMILES = xyz_lines[num_atoms+3]
 
     atom_charges, atom_positions = [], []
     for line in mol_xyz:
@@ -197,6 +203,9 @@ def process_xyz_gdb9(datafile):
 
     molecule = {'num_atoms': num_atoms, 'charges': atom_charges, 'positions': atom_positions}
     molecule.update(mol_props)
+
     molecule = {key: torch.tensor(val) for key, val in molecule.items()}
+    # TODO: data load
+    # molecule['SLIMES'] = mol_SMILES
 
     return molecule
