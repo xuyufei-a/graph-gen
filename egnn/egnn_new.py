@@ -89,11 +89,11 @@ class EquivariantUpdate(nn.Module):
         input_tensor = torch.cat([h[row], h[col], edge_attr], dim=1)
         if self.tanh:
             #TODO: display
-            # y = self.coord_mlp(input_tensor)
-            # print("net out: ", h.abs().max(), edge_attr.abs().max(), y.abs().max())
-            # if torch.any(torch.isnan(y)):
-            #     print('', flush=True)
-            #     exit()
+            y = self.coord_mlp(input_tensor)
+            print("net out: ", h.abs().max(), edge_attr.abs().max(), y.abs().max())
+            if torch.any(torch.isnan(y)):
+                print('', flush=True)
+                exit()
             # print("net out: ", y.abs().max(), torch.tanh(y).abs().max(), coord_diff.abs().max(), input_tensor.abs().max(), h.abs().max(), self.coords_range)
 
             trans = coord_diff * torch.tanh(self.coord_mlp(input_tensor)) * self.coords_range
@@ -265,7 +265,8 @@ def coord2diff(x, edge_index, norm_constant=1):
     norm = torch.sqrt(radial + 1e-8)
     coord_diff = coord_diff/(norm + norm_constant)
     # TODO:modify
-    radial = radial / norm 
+    max_n_dims = 18
+    radial = radial / max_n_dims
     return radial, coord_diff
 
 
