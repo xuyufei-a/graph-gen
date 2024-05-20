@@ -102,8 +102,8 @@ def analyze_and_save(args, eval_args, device, generative_model,
             node_num = int(node_mask[j].sum().item())
             dim_num = int(dims_mask[j].sum().item())
             atom_type = torch.argmax(one_hot[j], dim=1)[0:node_num]
-            coord = x[j, 0:node_num, 0:dim_num]
-            molecules.append((coord, atom_type)) 
+            adj = inverse_SRD(x[j, 0:node_num, 0:dim_num])
+            molecules.append((adj, atom_type)) 
 
         current_num_samples = (i+1) * batch_size
         secs_per_sample = (time.time() - start_time) / current_num_samples
