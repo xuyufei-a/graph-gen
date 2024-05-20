@@ -5,7 +5,7 @@ def inverse_SRD(x: torch.Tensor) -> torch.Tensor:
     # x: B * N * D
 
     out = torch.matmul(x, x.transpose(1, 2)).fill_diagonal_(0).sigmoid_()
-    out = (out * 4).floor() 
+    out = (out * 4).floor().to(dtype=torch.int8)
     return out
 
 def build_molecule(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Chem.Mol:

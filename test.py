@@ -21,6 +21,7 @@ from qm9.utils import prepare_context, compute_mean_mad
 from qm9 import visualizer as qm9_visualizer
 import qm9.losses as losses
 from mypy.utils.MoleculeMetrics import MoleculeMetrics
+from mypy.utils.molecule_transform import inverse_SRD
 
 try:
     from qm9 import rdkit_functions
@@ -97,14 +98,12 @@ def analyze_and_save(args, eval_args, device, generative_model,
         one_hot, x, node_mask, dims_mask =  sample_different_sizes_and_dims(args, eval_args, device, generative_model
                                         , nodes_dist, dims_dist, dataset_info, batch_size)
 
-        print(one_hot, x, node_mask, dims_mask)
         for j in range(batch_size):
-            atom_type = torch.argmax(one_hot[j], dim=1).item()
-            x = x[j, 0:node_mask[j].sum().item(), 0:dims_mask[j].sum().item()]
-            molecules.append((x, atom_type)) 
-            print(x, atom_type)
-        
-        exit()
+            node_num = int(node_mask[j].sum().item())
+            dim_num = int(dims_mask[j].sum().item())
+            atom_type = torch.argmax(one_hot[j], dim=1)[0:node_num]
+            coord = x[j, 0:node_num, 0:dim_num]
+            molecules.append((coord, atom_type)) 
 
         current_num_samples = (i+1) * batch_size
         secs_per_sample = (time.time() - start_time) / current_num_samples
@@ -209,7 +208,6 @@ def main():
     # Analyze validity, uniqueness and novelty
     histogram = dataset_info['ranks'] 
     dims_dist = DistributionNodes(histogram)
-    eval_args.batch_size_gen = 2
     rdkit_metrics = analyze_and_save(
         args, eval_args, device, generative_model, nodes_dist, dims_dist,
         prop_dist, dataset_info, n_samples=eval_args.n_samples,
