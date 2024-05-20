@@ -113,7 +113,7 @@ def analyze_and_save(args, eval_args, device, generative_model,
             node_num = int(node_nums[j].item())
             dim_num = int(dim_nums[j].item())
             atom_type = torch.argmax(one_hot[j], dim=1)[0:node_num]
-            adj = adjs[j]
+            adj = adjs[j, 0:node_num, 0:node_num]
             molecules.append((adj, atom_type)) 
 
         current_num_samples = (i+1) * batch_size
@@ -225,7 +225,6 @@ def main():
         batch_size=eval_args.batch_size_gen)
 
     if rdkit_metrics is not None:
-        rdkit_metrics = rdkit_metrics[0]
         print("Validity %.4f, Uniqueness: %.4f, Novelty: %.4f" % (rdkit_metrics[0], rdkit_metrics[1], rdkit_metrics[2]))
     else:
         print("Install rdkit roolkit to obtain Validity, Uniqueness, Novelty")
