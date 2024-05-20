@@ -1,6 +1,6 @@
 
 def load_qm9_slimes() -> list:
-    path = 'data/molecule_SLIMES.txt'
+    path = 'mypy/data/molecule_SLIMES.txt'
     with open(path, 'r') as f:
         lines = f.readlines()
 

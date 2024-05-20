@@ -75,7 +75,7 @@ def save_point_file(path, one_hot, charges, positions, dataset_info, id_from=0, 
 
 # TODO: my function
 def sample_different_sizes_and_dims(args, eval_args, device, generative_model,
-                                    nodes_dist, dataset_info, n_samples=10, dims_dist=None):
+                                    nodes_dist, dims_dist, dataset_info, n_samples=10):
     # nodes_list: qm9.models.DistributionNodes
 
     nodesxsample = nodes_dist.sample(n_samples)
@@ -93,6 +93,8 @@ def sample_different_sizes_and_dims(args, eval_args, device, generative_model,
         join(eval_args.model_path, 'eval/molecules/'), one_hot, charges, x,
         id_from=0, name='molecule', dataset_info=dataset_info,
         node_mask=node_mask, dims_mask=dims_mask)
+    
+    return one_hot, x, node_mask, dims_mask
  
 
 def sample_different_sizes_and_save(args, eval_args, device, generative_model,
@@ -202,8 +204,8 @@ def main():
     histogram = dataset_info['ranks'] 
     dims_dist = DistributionNodes(histogram)
     sample_different_sizes_and_dims(
-        args, eval_args, device, flow, nodes_dist,
-        dataset_info=dataset_info, n_samples=1, dims_dist=dims_dist)
+        args, eval_args, device, flow, nodes_dist, dims_dist=dims_dist,
+        dataset_info=dataset_info, n_samples=1)
     print('finished')
 
 if __name__ == "__main__":

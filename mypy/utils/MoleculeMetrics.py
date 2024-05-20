@@ -1,10 +1,11 @@
 import torch
 from rdkit import Chem
 from rdkit.Chem.rdchem import AtomValenceException
-from utils.molecule_transform import build_molecule
+from mypy.utils.molecule_transform import build_molecule
+from mypy.utils.load_qm9_slimes import load_qm9_slimes
 
 class MoleculeMetrics:
-    def __init__(self, dataset_smiles_list: list):
+    def __init__(self, dataset_smiles_list: list=load_qm9_slimes()):
         self.dataset_smiles_list = dataset_smiles_list
 
     def compute_validity(self, molecules: list):
