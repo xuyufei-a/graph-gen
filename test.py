@@ -98,11 +98,22 @@ def analyze_and_save(args, eval_args, device, generative_model,
         one_hot, x, node_mask, dims_mask =  sample_different_sizes_and_dims(args, eval_args, device, generative_model
                                         , nodes_dist, dims_dist, dataset_info, batch_size)
 
+        node_nums = node_mask.sum(dim=1)
+        dim_nums = dims_mask.sum(dim=1)
+
         for j in range(batch_size):
-            node_num = int(node_mask[j].sum().item())
-            dim_num = int(dims_mask[j].sum().item())
+            node_num = int(node_nums[j].item())
+            dim_num = int(dim_nums[j].item())
+            tmp = torch.zeros_like(x[j])
+            tmp[0:node_num, 0:dim_num] = 1
+            x[j] = x[j] * tmp
+
+        adjs = inverse_SRD(x)
+        for j in range(batch_size):
+            node_num = int(node_nums[j].item())
+            dim_num = int(dim_nums[j].item())
             atom_type = torch.argmax(one_hot[j], dim=1)[0:node_num]
-            adj = inverse_SRD(x[j, 0:node_num, 0:dim_num])
+            adj = adjs[j]
             molecules.append((adj, atom_type)) 
 
         current_num_samples = (i+1) * batch_size
