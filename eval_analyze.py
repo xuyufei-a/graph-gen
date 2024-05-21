@@ -192,6 +192,7 @@ def main():
         print(f'Overview: val nll {val_nll} test nll {test_nll}',
               stability_dict,
               file=f)
+    print("Validity %.4f, Uniqueness: %.4f, Novelty: %.4f" % (rdkit_metrics[0], rdkit_metrics[1], rdkit_metrics[2]))
 
 
 if __name__ == "__main__":
