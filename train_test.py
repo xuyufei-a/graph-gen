@@ -27,6 +27,8 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         # TODO: modify
         dim_mask = data['dim_mask'].to(device, dtype).unsqueeze(1)
         charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
+        charges = charges.unsqueeze(2)
+
 
         x = remove_mean_with_mask(x, node_mask)
 
@@ -119,6 +121,7 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
             one_hot = data['one_hot'].to(device, dtype)
             charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
             dim_mask = data['dim_mask'].to(device, dtype).unsqueeze(1)
+            charges = charges.unsqueeze(2)
 
             if args.augment_noise > 0:
                 # Add noise eps ~ N(0, augment_noise) around points.

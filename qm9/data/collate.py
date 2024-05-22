@@ -80,9 +80,9 @@ class PreprocessQM9:
         # TODO: force
         batch = {prop: batch_stack([mol[prop] for mol in batch]) for prop in batch[0].keys()}
 
-        to_keep = (batch['charges'].sum(0) > 0)
+#         to_keep = (batch['charges'].sum(0) > 0)
 
-        batch = {key: drop_zeros(prop, to_keep) for key, prop in batch.items()}
+#         batch = {key: drop_zeros(prop, to_keep) for key, prop in batch.items()}
 
         atom_mask = torch.zeros(batch['positions'].shape[0:-1], device=batch['positions'].device)
         for i in range(batch['positions'].shape[0]):

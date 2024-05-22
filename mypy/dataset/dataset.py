@@ -46,7 +46,7 @@ class ProcessedDataset(Dataset):
         # If included species is not specified
 
         if included_species is None:
-            included_species = torch.unique(self.data['charges'], sorted=True)
+            included_species = torch.unique(torch.tensor(self.data['charges']), sorted=True)
             if included_species[0] == 0:
                 included_species = included_species[1:]
 

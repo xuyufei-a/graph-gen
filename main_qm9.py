@@ -127,6 +127,7 @@ args.wandb_usr = utils.get_wandb_username(args.wandb_usr)
 
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 device = torch.device("cuda" if args.cuda else "cpu")
+print(device)
 dtype = torch.float32
 
 if args.resume is not None:
