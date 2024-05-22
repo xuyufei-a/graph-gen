@@ -84,9 +84,9 @@ class PreprocessQM9:
 
         # batch = {key: drop_zeros(prop, to_keep) for key, prop in batch.items()}
 
-        atom_mask = torch.zeros(batch['position'].shape[0:-1], device=batch['position'].device)
-        for i in range(batch['position'].shape[0]):
-            atom_mask[i, :batch['n_atoms'][i]] = 1
+        atom_mask = torch.zeros(batch['positions'].shape[0:-1], device=batch['positions'].device)
+        for i in range(batch['positions'].shape[0]):
+            atom_mask[i, :int(batch['num_atoms'][i])] = 1
         batch['atom_mask'] = atom_mask
 
         #Obtain edges
@@ -100,9 +100,9 @@ class PreprocessQM9:
         #edge_mask = atom_mask.unsqueeze(1) * atom_mask.unsqueeze(2)
         batch['edge_mask'] = edge_mask.view(batch_size * n_nodes * n_nodes, 1)
 
-        assert(self.load_charges == False)
-        if self.load_charges:
-            batch['charges'] = batch['charges'].unsqueeze(2)
-        else:
-            batch['charges'] = torch.zeros(0)
+#         assert(self.load_charges == False)
+#         if self.load_charges:
+#             batch['charges'] = batch['charges'].unsqueeze(2)
+#         else:
+#             batch['charges'] = torch.zeros(0)
         return batch

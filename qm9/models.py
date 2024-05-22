@@ -15,7 +15,7 @@ def get_model(args, device, dataset_info, dataloader_train, n_dims=3):
     prop_dist = None
     if len(args.conditioning) > 0:
         prop_dist = DistributionProperty(dataloader_train, args.conditioning)
-
+    
     if args.condition_time:
         dynamics_in_node_nf = in_node_nf + 1
     else:

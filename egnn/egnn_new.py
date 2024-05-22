@@ -265,7 +265,7 @@ def coord2diff(x, edge_index, norm_constant=1):
     norm = torch.sqrt(radial + 1e-8)
     coord_diff = coord_diff/(norm + norm_constant)
     # TODO:modify
-    max_n_dims = 18
+    max_n_dims = 1
     radial = radial / max_n_dims
     return radial, coord_diff
 

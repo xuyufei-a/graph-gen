@@ -172,12 +172,6 @@ wandb.save('*.txt')
 # Retrieve QM9 dataloaders
 dataloaders, charge_scale = dataset.retrieve_dataloaders(args)
 
-for data in dataloaders['train']:
-    for key, val in data.items():
-        print(key, val.shape)
-    print(data['edge_mask'])
-    exit()
-
 data_dummy = next(iter(dataloaders['train']))
 
 
@@ -194,7 +188,9 @@ args.context_node_nf = context_node_nf
 
 
 # Create EGNN flow
-model, nodes_dist, prop_dist = get_model(args, device, dataset_info, dataloaders['train'])
+# TODO
+args.include_charges = False
+model, nodes_dist, prop_dist = get_model(args, device, dataset_info, dataloaders['train'], n_dims=18)
 if prop_dist is not None:
     prop_dist.set_normalizer(property_norms)
 model = model.to(device)
@@ -214,9 +210,9 @@ def check_mask_correct(variables, node_mask):
 def main():
     if args.resume is not None:
         flow_state_dict = torch.load(join(args.resume, 'flow.npy'))
-        optim_state_dict = torch.load(join(args.resume, 'optim.npy'))
+        # optim_state_dict = torch.load(join(args.resume, 'optim.npy'))
         model.load_state_dict(flow_state_dict)
-        optim.load_state_dict(optim_state_dict)
+        # optim.load_state_dict(optim_state_dict)
 
     # Initialize dataparallel if enabled and possible.
     if args.dp and torch.cuda.device_count() > 1:
@@ -242,6 +238,7 @@ def main():
 
     best_nll_val = 1e8
     best_nll_test = 1e8
+
     for epoch in range(args.start_epoch, args.n_epochs):
         start_epoch = time.time()
         train_epoch(args=args, loader=dataloaders['train'], epoch=epoch, model=model, model_dp=model_dp,
