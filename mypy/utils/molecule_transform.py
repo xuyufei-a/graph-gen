@@ -27,3 +27,13 @@ def build_molecule(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Chem.Mo
         mol.AddBond(bond[0].item(), bond[1].item(), bond_dict[adjacency[bond[0], bond[1]].item()])
 
     return mol
+
+def SRD(adj: torch.Tensor, N: int=29, D:int=18) -> torch.Tensor:
+    # adj: n * n
+    
+    degree = torch.sum(adj, dim=1)
+    A = adj + torch.diag(degree)
+
+    val, vec = torch.linalg.eig(A)
+
+    return torch.diag(val ** 0.5) * vec

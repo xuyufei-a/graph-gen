@@ -76,13 +76,17 @@ class PreprocessQM9:
         batch : dict of Pytorch tensors
             The collated data.
         """
+
+        # TODO: force
         batch = {prop: batch_stack([mol[prop] for mol in batch]) for prop in batch[0].keys()}
 
-        to_keep = (batch['charges'].sum(0) > 0)
+        # to_keep = (batch['charges'].sum(0) > 0)
 
-        batch = {key: drop_zeros(prop, to_keep) for key, prop in batch.items()}
+        # batch = {key: drop_zeros(prop, to_keep) for key, prop in batch.items()}
 
-        atom_mask = batch['charges'] > 0
+        atom_mask = torch.zeros(batch['positions'].shape[0:-1], device=batch['positions'].device)
+        for i in range(batch['positions'].shape[0]):
+            atom_mask[i, :int(batch['num_atoms'][i])] = 1
         batch['atom_mask'] = atom_mask
 
         #Obtain edges
