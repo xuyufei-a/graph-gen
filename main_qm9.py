@@ -189,7 +189,6 @@ args.context_node_nf = context_node_nf
 
 # Create EGNN flow
 # TODO
-args.include_charges = False
 model, nodes_dist, prop_dist = get_model(args, device, dataset_info, dataloaders['train'], n_dims=18)
 if prop_dist is not None:
     prop_dist.set_normalizer(property_norms)
