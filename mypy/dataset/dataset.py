@@ -45,10 +45,10 @@ class ProcessedDataset(Dataset):
 
         # If included species is not specified
 
-        # if included_species is None:
-        #     included_species = torch.unique(self.data['charges'], sorted=True)
-        #     if included_species[0] == 0:
-        #         included_species = included_species[1:]
+        if included_species is None:
+            included_species = torch.unique(self.data['charges'], sorted=True)
+            if included_species[0] == 0:
+                included_species = included_species[1:]
 
         # assert(subtract_thermo is False)
         # if subtract_thermo:
@@ -60,14 +60,14 @@ class ProcessedDataset(Dataset):
         #     for key in thermo_targets:
         #         data[key] -= data[key + '_thermo'].to(data[key].dtype)
 
-        # self.included_species = included_species
+        self.included_species = included_species
 
         # self.data['one_hot'] = self.data['charges'].unsqueeze(-1) == included_species.unsqueeze(0).unsqueeze(0)
 
-        # self.num_species = len(included_species)
-        # self.max_charge = max(included_species)
+        self.num_species = len(included_species)
+        self.max_charge = max(included_species)
 
-        # self.parameters = {'num_species': self.num_species, 'max_charge': self.max_charge}
+        self.parameters = {'num_species': self.num_species, 'max_charge': self.max_charge}
 
         # Get a dictionary of statistics for all properties that are one-dimensional tensors.
         self.calc_stats()

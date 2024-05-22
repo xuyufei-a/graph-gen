@@ -1,5 +1,9 @@
 import tarfile
+<<<<<<< HEAD
 from get_split import get_splits
+=======
+from .get_split import get_splits
+>>>>>>> 09c2c208e6fe690c20f2d1a69066e8677411f791
 import torch
 import numpy as np
 from rdkit import Chem
@@ -11,6 +15,8 @@ splits = get_splits()
 
 atom_encoder = {'H': 0, 'C': 1, 'N': 2, 'O': 3, 'F': 4}
 
+charge_dict = {'H': 1, 'C': 6, 'N': 7, 'O': 8, 'F': 9}
+
 def convert_data(type: str): 
     idlist = splits[type].tolist()
 
@@ -18,7 +24,8 @@ def convert_data(type: str):
     tardata = tarfile.open(tar_path, 'r')
     files = tardata.getmembers()
 
-    out_dict = {'num_atoms': [], 'positions': [], 'one_hot': [], 'dim_mask': []}
+
+    out_dict = {'num_atoms': [], 'positions': [], 'one_hot': [], 'dim_mask': [], 'charges': []}
     for file in files:
         filename = file.name
         name = filename.split('.')[0]
@@ -45,11 +52,14 @@ def convert_data(type: str):
                 out_dict['dim_mask'].append(dim_mask.tolist())
 
                 one_hot = torch.zeros(N, 5)
+                charges = torch.zeros(N)
                 atoms = mol.GetAtoms()
                 for i, atom in enumerate(atoms):
+                    charges[i] = charge_dict[atom.GetSymbol()]
                     atom_type = atom_encoder[atom.GetSymbol()]
                     one_hot[i, atom_type] = 1
                 out_dict['one_hot'].append(one_hot.tolist())
+                out_dict['charges'].append(charges.tolist())
                 
     out_dict = {key: np.array(val, dtype=np.float32) for key, val in out_dict.items()}
     np.savez(f'qm9/temp/qm9_srd/{type}.npz', **out_dict)
