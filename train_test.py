@@ -19,10 +19,13 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
     nll_epoch = []
     n_iterations = len(loader)
     for i, data in enumerate(loader):
+        # TODO: hang up
         x = data['positions'].to(device, dtype)
         node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
         edge_mask = data['edge_mask'].to(device, dtype)
         one_hot = data['one_hot'].to(device, dtype)
+        # TODO: modify
+        dim_mask = data['dim_mask'].to(device, dtype)
         charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
 
         x = remove_mean_with_mask(x, node_mask)
@@ -51,7 +54,7 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
 
         # transform batch through flow
         nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
-                                                                x, h, node_mask, edge_mask, context)
+                                                                x, h, node_mask, dim_mask, edge_mask, context)
         # standard nll from forward KL
         loss = nll + args.ode_regularization * reg_term
         loss.backward()
@@ -115,6 +118,7 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
             edge_mask = data['edge_mask'].to(device, dtype)
             one_hot = data['one_hot'].to(device, dtype)
             charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
+            dim_mask = data['dim_mask'].to(device, dtype)
 
             if args.augment_noise > 0:
                 # Add noise eps ~ N(0, augment_noise) around points.
@@ -137,7 +141,7 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
 
             # transform batch through flow
             nll, _, _ = losses.compute_loss_and_nll(args, eval_model, nodes_dist, x, h,
-                                                    node_mask, edge_mask, context)
+                                                    node_mask, dim_mask, edge_mask, context)
             # standard nll from forward KL
 
             nll_epoch += nll.item() * batch_size

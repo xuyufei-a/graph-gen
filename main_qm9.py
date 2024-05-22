@@ -172,6 +172,12 @@ wandb.save('*.txt')
 # Retrieve QM9 dataloaders
 dataloaders, charge_scale = dataset.retrieve_dataloaders(args)
 
+for data in dataloaders['train']:
+    for key, val in data.items():
+        print(key, val.shape)
+    print(data['edge_mask'])
+    exit()
+
 data_dummy = next(iter(dataloaders['train']))
 
 
