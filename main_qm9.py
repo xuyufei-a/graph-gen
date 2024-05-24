@@ -142,7 +142,6 @@ if args.resume is not None:
         args = pickle.load(f)
 
     args.resume = resume
-    args.break_train_epoch = False
 
     args.exp_name = exp_name
     args.start_epoch = start_epoch
@@ -238,7 +237,10 @@ def main():
 
     best_nll_val = 1e8
     best_nll_test = 1e8
-
+    
+#     for p in model.parameters():
+#         assert(p.is_cuda)
+    # args.break_train_epoch = True
     for epoch in range(args.start_epoch, args.n_epochs):
         start_epoch = time.time()
         train_epoch(args=args, loader=dataloaders['train'], epoch=epoch, model=model, model_dp=model_dp,
@@ -251,16 +253,17 @@ def main():
             if isinstance(model, en_diffusion.EnVariationalDiffusion):
                 wandb.log(model.log_info(), commit=True)
 
-            if not args.break_train_epoch:
-                analyze_and_save(args=args, epoch=epoch, model_sample=model_ema, nodes_dist=nodes_dist,
-                                 dataset_info=dataset_info, device=device,
-                                 prop_dist=prop_dist, n_samples=args.n_stability_samples)
+#             if not args.break_train_epoch:
+#                 analyze_and_save(args=args, epoch=epoch, model_sample=model_ema, nodes_dist=nodes_dist,
+#                                  dataset_info=dataset_info, device=device,
+#                                  prop_dist=prop_dist, n_samples=args.n_stability_samples)
             nll_val = test(args=args, loader=dataloaders['valid'], epoch=epoch, eval_model=model_ema_dp,
                            partition='Val', device=device, dtype=dtype, nodes_dist=nodes_dist,
                            property_norms=property_norms)
-            nll_test = test(args=args, loader=dataloaders['test'], epoch=epoch, eval_model=model_ema_dp,
-                            partition='Test', device=device, dtype=dtype,
-                            nodes_dist=nodes_dist, property_norms=property_norms)
+#             nll_test = test(args=args, loader=dataloaders['test'], epoch=epoch, eval_model=model_ema_dp,
+#                             partition='Test', device=device, dtype=dtype,
+#                             nodes_dist=nodes_dist, property_norms=property_norms)
+            nll_test = best_nll_test
 
             if nll_val < best_nll_val:
                 best_nll_val = nll_val

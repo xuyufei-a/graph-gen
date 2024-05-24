@@ -313,7 +313,8 @@ class EnVariationalDiffusion(torch.nn.Module):
         net_out = self.dynamics._forward(t, x, node_mask, edge_mask, context)
 
         # TODO bug?
-        net_out[:, :, :dim_mask.shape[-1]] *= dim_mask
+        if dim_mask is not None:
+            net_out[:, :, :dim_mask.shape[-1]] *= dim_mask
         return net_out
 
     def inflate_batch_array(self, array, target):
@@ -355,7 +356,7 @@ class EnVariationalDiffusion(torch.nn.Module):
         h_int = (h['integer'].float() - self.norm_biases[2]) / self.norm_values[2]
 
         if self.include_charges:
-            h_int = h_int * node_mask
+            h_int = h_int.unsqueeze(2) * node_mask
 
         # Create new h dictionary.
         h = {'categorical': h_cat, 'integer': h_int}
@@ -716,7 +717,7 @@ class EnVariationalDiffusion(torch.nn.Module):
 
             loss = kl_prior + estimator_loss_terms + neg_log_constants
 
-        assert len(loss.shape) == 1, f'{loss.shape} has more than only batch dim.'
+        assert len(loss.shape) == 1, f'{loss.shape} has more t35han only batch dim.'
 
         return loss, {'t': t_int.squeeze(), 'loss_t': loss.squeeze(),
                       'error': error.squeeze()}
@@ -725,7 +726,6 @@ class EnVariationalDiffusion(torch.nn.Module):
         """
         Computes the loss (type l2 or NLL) if training. And if eval then always computes NLL.
         """
-        assert(dim_mask is not None)
         # Normalize data, take into account volume change in x.
         x, h, delta_log_px = self.normalize(x, h, node_mask)
 

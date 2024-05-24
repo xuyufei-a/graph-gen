@@ -5,6 +5,7 @@ from qm9.data.utils import initialize_datasets
 from mypy.dataset.dataset import ProcessedDataset
 import os
 import numpy as np
+import torch
 
 
 def retrieve_dataloaders(cfg):
@@ -22,7 +23,11 @@ def retrieve_dataloaders(cfg):
 
         splits = ['train', 'test', 'valid']
 
-        datasets = {split: ProcessedDataset(np.load(os.path.join(dataset_path, split+'.npz'))) for split in splits}
+        datasets = {}
+        for split in splits:
+            with np.load(os.path.join(dataset_path, split+'.npz')) as f:
+                datasets[split] = {key: torch.from_numpy(val) for key, val in f.items()}
+        datasets = {split: ProcessedDataset(data) for split, data in datasets.items()}
 
         # Construct PyTorch dataloaders from datasets
         preprocess = PreprocessQM9(load_charges=cfg.include_charges)

@@ -41,4 +41,6 @@ class MoleculeMetrics:
         valid, validity = self.compute_validity(molecules)
         unique, uniqueness = self.compute_uniqueness(valid)
         novel, novelty = self.compute_novelty(unique)
+        print('____')
+        print(len(valid), len(unique), len(novel))
         return validity, uniqueness, novelty
