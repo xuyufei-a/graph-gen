@@ -3,12 +3,11 @@ from rdkit import Chem
 
 def inverse_SRD(x: torch.Tensor) -> torch.Tensor:
     # x: B * N * D
-    out = torch.matmul(x, x.transpose(1, 2)).sigmoid()
+    out = torch.matmul(x, x.transpose(1, 2))
 
-    out = (out * 4).floor().to(dtype=torch.int8)
+    out = out.floor().to(dtype=torch.int8).clamp(0, 3)
     tmp = torch.eye(out.size(1), dtype=torch.bool).unsqueeze(0).to(out.device)
     out *= ~tmp
-    out = out.clamp(0, 3)
 
     return out
 
