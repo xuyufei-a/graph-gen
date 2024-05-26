@@ -96,7 +96,8 @@ class BasicMolecularMetrics(object):
                 largest_mol = max(mol_frags, default=mol, key=lambda m: m.GetNumAtoms())
                 smiles = mol2smiles(largest_mol)
                 valid.append(smiles)
-
+        
+        print(valid)
         return valid, len(valid) / len(generated)
 
     def compute_uniqueness(self, valid):

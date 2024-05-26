@@ -356,7 +356,7 @@ class EnVariationalDiffusion(torch.nn.Module):
         h_int = (h['integer'].float() - self.norm_biases[2]) / self.norm_values[2]
 
         if self.include_charges:
-            h_int = h_int.unsqueeze(2) * node_mask
+            h_int = h_int * node_mask
 
         # Create new h dictionary.
         h = {'categorical': h_cat, 'integer': h_int}
