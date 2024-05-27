@@ -1,9 +1,5 @@
 import tarfile
-<<<<<<< HEAD
-from get_split import get_splits
-=======
 from .get_split import get_splits
->>>>>>> 09c2c208e6fe690c20f2d1a69066e8677411f791
 import torch
 import numpy as np
 from rdkit import Chem
@@ -14,7 +10,6 @@ D = 18
 splits = get_splits()
 
 atom_encoder = {'H': 0, 'C': 1, 'N': 2, 'O': 3, 'F': 4}
-
 charge_dict = {'H': 1, 'C': 6, 'N': 7, 'O': 8, 'F': 9}
 
 def convert_data(type: str): 
@@ -23,7 +18,6 @@ def convert_data(type: str):
     tar_path = 'qm9/temp/qm9/dsgdb9nsd.xyz.tar.bz2'
     tardata = tarfile.open(tar_path, 'r')
     files = tardata.getmembers()
-
 
     out_dict = {'num_atoms': [], 'positions': [], 'one_hot': [], 'dim_mask': [], 'charges': []}
     for file in files:
@@ -43,6 +37,7 @@ def convert_data(type: str):
 
                 positions = torch.zeros(N, N)
                 positions[0:n, 0:n] = SRD(torch.tensor(adj, dtype=torch.float))
+
                 out_dict['positions'].append(positions[0:N, 0:D].tolist())
 
                 rank = torch.linalg.matrix_rank(positions)
@@ -60,15 +55,25 @@ def convert_data(type: str):
                     one_hot[i, atom_type] = 1
                 out_dict['one_hot'].append(one_hot.tolist())
                 out_dict['charges'].append(charges.tolist())
+
+                # verify
+                mask = torch.zeros(N, N)
+                mask[0:n, 0:rank] = 1
+                posisions = positions * mask
+                tmp = torch.zeros_like(posisions)
+                tmp[0:n, 0:n] = torch.tensor(adj, dtype=torch.float) + torch.diag(torch.sum(torch.tensor(adj, dtype=torch.float), dim=1))
+                # print(torch.dist(posisions @ posisions.t(), tmp), posisions @ posisions.t(), tmp)
+                assert(torch.dist(posisions @ posisions.t(), tmp) < 1e-4)
+                # x = input()
+                
                 
     out_dict = {key: np.array(val, dtype=np.float32) for key, val in out_dict.items()}
-    np.savez(f'qm9/temp/qm9_srd/{type}.npz', **out_dict)
+    np.savez_compressed(f'qm9/temp/qm9_srd/{type}.npz', **out_dict)
                     
 
 convert_data('valid')
 convert_data('test')
 convert_data('train')
-
 
 
 

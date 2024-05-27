@@ -4,7 +4,7 @@ from typing import Tuple
 
 def inverse_SRD(x: torch.Tensor) -> torch.Tensor:
     # x: B * N * D
-    out = torch.matmul(x, x.transpose(1, 2)).sigmoid()
+    out = torch.matmul(x, x.transpose(1, 2))
     tmp = torch.eye(out.size(1), dtype=torch.bool).unsqueeze(0).to(out.device)
     out *= ~tmp
 
@@ -31,18 +31,27 @@ def SRD(adj: torch.Tensor, N: int=29, D:int=18) -> torch.Tensor:
     degree = torch.sum(adj, dim=1)
     A = adj + torch.diag(degree)
 
-    val, vec = torch.linalg.eig(A)
+    val, vec = torch.linalg.eigh(A)
 
-    return torch.diag(val ** 0.5) * vec
+    sort_indices = torch.argsort(val, descending=True)
+    val = val[sort_indices]
+    vec = vec[:, sort_indices]
+    val = val.clamp(0, None)
+
+    ret = vec @ torch.diag(val ** 0.5)
+    assert(torch.dist(ret @ ret.t(), A) < 1e-4)
+    return  ret
 
 def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
     valence_dict = [1, 4, 3, 2, 1]
     valences = torch.zeros_like(atom_types, dtype=torch.int8)
     legal_valence = torch.zeros_like(adjacency, dtype=torch.int8)
 
+    inf = torch.tensor(float('inf')).to(adjacency.device)
     for i in range(adjacency.size(0)):
         atom_type = atom_types[i]
         valences[i] = valence_dict[atom_type.item()]
+        adjacency[i, i] = -inf
 
     for i in range(adjacency.size(0)):
 
@@ -50,17 +59,15 @@ def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Tuple
 
         while valences[i] > 0:
             p = torch.max(adjacency[i], dim=0).indices
-            if p == i or adjacency[i, p] < 0:
-                break
-            
             adjacency[i, p] -= unit
+
+            if p == i:
+                break
             if valences[p] > 0:
                 valences[i] -= 1
                 valences[p] -= 1
                 legal_valence[i, p] += 1
                 legal_valence[p, i] += 1
-                
-#         print(adjacency[i], legal_valence[i], valences[i], sep='\n')
 
     return legal_valence
 

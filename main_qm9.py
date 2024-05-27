@@ -170,6 +170,7 @@ wandb.init(**kwargs)
 wandb.save('*.txt')
 
 # Retrieve QM9 dataloaders
+# args.batch_size = 1
 dataloaders, charge_scale = dataset.retrieve_dataloaders(args)
 
 data_dummy = next(iter(dataloaders['train']))

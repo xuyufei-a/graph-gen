@@ -10,6 +10,7 @@ import qm9.utils as qm9utils
 from qm9 import losses
 import time
 import torch
+from mypy.utils.molecule_transform import inverse_SRD
 
 
 def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dtype, property_norms, optim,
@@ -29,6 +30,10 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
         charges = charges.unsqueeze(2)
         
+#         print(x, dim_mask, charges)
+#         print(inverse_SRD(x))
+#         a = input()
+#         continue
 
         x = remove_mean_with_mask(x, node_mask)
 
