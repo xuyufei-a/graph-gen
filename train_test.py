@@ -31,7 +31,10 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         charges = charges.unsqueeze(2)
         
 #         print(x, dim_mask, charges)
-#         print(inverse_SRD(x))
+#         print(i)
+#         print(x.max())
+#         y = inverse_SRD(x)
+#         print(torch.round(y).to(dtype=torch.int32))
 #         a = input()
 #         continue
 

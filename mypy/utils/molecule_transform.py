@@ -53,15 +53,20 @@ def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Tuple
         valences[i] = valence_dict[atom_type.item()]
         adjacency[i, i] = -inf
 
-    for i in range(adjacency.size(0)):
+    sorted_indices = torch.argsort(valences, descending=True)
+    valences = valences[sorted_indices]
+    atom_types = atom_types[sorted_indices]
+    adjacency = adjacency[sorted_indices, :][:, sorted_indices]
 
-        unit = adjacency[i].topk(valences[i]).values.sum() / valences[i]
+    for i in range(adjacency.size(0)):
+#         unit = adjacency[i].topk(valences[i]).values.sum() / valences[i]
+        unit = 1
 
         while valences[i] > 0:
             p = torch.max(adjacency[i], dim=0).indices
             adjacency[i, p] -= unit
 
-            if p == i:
+            if p == i or adjacency[i, p] < - 100 * unit:
                 break
             if valences[p] > 0:
                 valences[i] -= 1
@@ -69,6 +74,5 @@ def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Tuple
                 legal_valence[i, p] += 1
                 legal_valence[p, i] += 1
 
-    return legal_valence
-
+    return legal_valence, atom_types
 
