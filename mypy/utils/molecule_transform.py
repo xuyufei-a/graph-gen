@@ -7,7 +7,6 @@ def inverse_SRD(x: torch.Tensor) -> torch.Tensor:
     out = torch.matmul(x, x.transpose(1, 2))
     tmp = torch.eye(out.size(1), dtype=torch.bool).unsqueeze(0).to(out.device)
     out *= ~tmp
-
     return out
 
 def build_molecule(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Chem.Mol:
