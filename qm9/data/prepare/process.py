@@ -3,6 +3,8 @@ import os
 import torch
 import tarfile
 from torch.nn.utils.rnn import pad_sequence
+from rdkit import Chem
+from mypy.utils.molecule_transform import SRD
 
 charge_dict = {'H': 1, 'C': 6, 'N': 7, 'O': 8, 'F': 9}
 
@@ -97,13 +99,8 @@ def process_xyz_files(data, process_file_fn, file_ext=None, file_idx_list=None, 
     molecules = {prop: [mol[prop] for mol in molecules] for prop in props}
 
     # If stacking is desireable, pad and then stack.
-
-    # TODO: data load
-
-    # tmp = molecules.pop("SLIMES")
     if stack:
         molecules = {key: pad_sequence(val, batch_first=True) if val[0].dim() > 0 else torch.stack(val) for key, val in molecules.items()}
-    # molecules["SLIMES"] = tmp
 
     return molecules
 
@@ -182,12 +179,11 @@ def process_xyz_gdb9(datafile):
     TODO : Replace breakpoint with a more informative failure?
     """
     xyz_lines = [line.decode('UTF-8') for line in datafile.readlines()]
-    
+
     num_atoms = int(xyz_lines[0])
     mol_props = xyz_lines[1].split()
     mol_xyz = xyz_lines[2:num_atoms+2]
     mol_freq = xyz_lines[num_atoms+2]
-    mol_SMILES = xyz_lines[num_atoms+3]
 
     atom_charges, atom_positions = [], []
     for line in mol_xyz:
@@ -201,11 +197,39 @@ def process_xyz_gdb9(datafile):
     mol_props = dict(zip(prop_strings, mol_props))
     mol_props['omega1'] = max(float(omega) for omega in mol_freq.split())
 
-    molecule = {'num_atoms': num_atoms, 'charges': atom_charges, 'positions': atom_positions}
-    molecule.update(mol_props)
 
+    # TODO: add srd positions and dim_mask
+    # TODO: specific param for qm9
+    N = 29
+    D = 18
+
+    smiles = xyz_lines[num_atoms+3].split()[0]
+    mol = Chem.MolFromSmiles(smiles)
+    mol = Chem.AddHs(mol)
+    adj = Chem.GetAdjacencyMatrix(mol)
+
+    srd_positions = torch.zeros(N, N)
+    srd_positions[0:num_atoms, 0:num_atoms] = SRD(torch.tensor(adj, dtype=torch.float))
+
+    rank = torch.linalg.matrix_rank(srd_positions)
+    dim_mask = torch.zeros(D)
+    dim_mask[0:rank] = 1
+    dim_mask.unsqueeze(0)
+
+
+    # assert code 
+    mask = torch.zeros(N, N)
+    mask[0:num_atoms, 0:rank] = 1
+    mask_srd = srd_positions * mask
+    tmp = torch.zeros_like(mask_srd)
+    tmp[0:num_atoms, 0:num_atoms] = torch.tensor(adj, dtype=torch.float) + torch.diag(torch.sum(torch.tensor(adj, dtype=torch.float), dim=1))
+    # print(torch.dist(mask_srd @ mask_srd.t(), tmp), mask_srd @ mask_srd.t(), tmp)
+    assert(torch.dist(mask_srd @ mask_srd.t(), tmp) < 1e-4)
+    ###############
+
+    molecule = {'num_atoms': num_atoms, 'charges': atom_charges, 'positions': atom_positions, 
+                    'srd_positions': srd_positions[0:N, 0:D].tolist(), 'dim_mask': dim_mask.tolist()}
+    molecule.update(mol_props)
     molecule = {key: torch.tensor(val) for key, val in molecule.items()}
-    # TODO: data load
-    # molecule['SLIMES'] = mol_SMILES
 
     return molecule
