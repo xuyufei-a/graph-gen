@@ -66,13 +66,14 @@ def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Tuple
             p = torch.max(adjacency[i], dim=0).indices
             adjacency[i, p] -= unit
 
-            if p == i or adjacency[i, p] < - 100 * unit:
+            if p == i or adjacency[i, p] < - 100000 * unit:
                 break
             if valences[p] > 0:
                 valences[i] -= 1
                 valences[p] -= 1
                 legal_valence[i, p] += 1
                 legal_valence[p, i] += 1
+            else:
+                adjacency[i, p] = -inf
 
     return legal_valence, atom_types
-

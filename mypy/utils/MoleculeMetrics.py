@@ -14,14 +14,16 @@ class MoleculeMetrics:
     def compute_validity(self, molecules: list):
         valid = []
         
-        adjs = {}
-        types = {}
-        i = 0
+#         adjs = {}
+#         types = {}
+#         i = 0
+        cnt = 0
         for adjacency, atom_types in molecules:
 #             print(adjacency)
 #             continue
-            adjs[i] = adjacency
-            types[i] = atom_types
+#             adjs[i] = adjacency
+#             types[i] = atom_types
+#             i += 1    
             
             adjacency, atom_types = legalize_valence(adjacency, atom_types)
 #             print(adjacency)
@@ -38,9 +40,12 @@ class MoleculeMetrics:
             if smiles is not None:
                 valid.append(smiles)
                 print(smiles)
+                if '.' in smiles:
+                    cnt += 1
         
-        torch.save(adjs, 'adj.pt')
-        torch.save(types, 'type.pt')
+#         torch.save(adjs, 'adj.pt')
+#         torch.save(types, 'type.pt')
+        print(f'unconnected molecules: {cnt}')
         return valid, len(valid) / len(molecules) if len(molecules) > 0 else 0.0
     
     def compute_uniqueness(self, valid: list):
