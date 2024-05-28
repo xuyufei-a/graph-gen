@@ -21,14 +21,14 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
     n_iterations = len(loader)
     for i, data in enumerate(loader):
         # TODO: hang up
-        x = data['positions'].to(device, dtype)
+        # print(data.keys())
+        x = data['srd_positions'].to(device, dtype)
         node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
         edge_mask = data['edge_mask'].to(device, dtype)
         one_hot = data['one_hot'].to(device, dtype)
         # TODO: modify
         dim_mask = data['dim_mask'].to(device, dtype).unsqueeze(1)
         charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
-        charges = charges.unsqueeze(2)
         
 #         print(x, dim_mask, charges)
 #         print(i)
@@ -123,14 +123,14 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
         n_iterations = len(loader)
 
         for i, data in enumerate(loader):
-            x = data['positions'].to(device, dtype)
+            x = data['srd_positions'].to(device, dtype)
             batch_size = x.size(0)
             node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
             edge_mask = data['edge_mask'].to(device, dtype)
             one_hot = data['one_hot'].to(device, dtype)
             charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
             dim_mask = data['dim_mask'].to(device, dtype).unsqueeze(1)
-            charges = charges.unsqueeze(2)
+            charges = charges
 
             if args.augment_noise > 0:
                 # Add noise eps ~ N(0, augment_noise) around points.

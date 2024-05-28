@@ -78,9 +78,9 @@ class PreprocessQM9:
         """
         batch = {prop: batch_stack([mol[prop] for mol in batch]) for prop in batch[0].keys()}
 
-        to_keep = (batch['charges'].sum(0) > 0)
+        # to_keep = (batch['charges'].sum(0) > 0)
 
-        batch = {key: drop_zeros(prop, to_keep) for key, prop in batch.items()}
+        # batch = {key: drop_zeros(prop, to_keep) for key, prop in batch.items()}
 
         atom_mask = batch['charges'] > 0
         batch['atom_mask'] = atom_mask
