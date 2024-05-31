@@ -27,6 +27,7 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
         # TODO: modify 'positions' to 'srd_positions'
         # make the model to predict property by srd positions 
         batch_size, n_nodes, _ = data['srd_positions'].size()
+#         print(data['srd_positions'].size())
         atom_positions = data['srd_positions'].view(batch_size * n_nodes, -1).to(device, torch.float32)
         atom_mask = data['atom_mask'].view(batch_size * n_nodes, -1).to(device, torch.float32)
         edge_mask = data['edge_mask'].to(device, torch.float32)
