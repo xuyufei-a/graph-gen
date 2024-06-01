@@ -1,7 +1,7 @@
 import torch
 from rdkit import Chem, RDLogger
 from rdkit.Chem import rdDistGeom
-from typing import Tuple
+from typing import Tuple, List
 
 def inverse_SRD(x: torch.Tensor) -> torch.Tensor:
     # x: B * N * D
@@ -79,7 +79,49 @@ def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Tuple
 
     return legal_valence, atom_types
 
-def srd_to_xyz(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]
+def srd_to_smiles(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.Tensor) -> List[str]:
+    # srd: B * N * D
+    # node_mask: B * N
+    # atom_types: B * N
+    # smiles: list[str]
+
+    adjs = inverse_SRD(srd)
+    node_num = node_mask.sum(dim=1).int()
+    smiles = []
+
+    for i in range(adjs.shape[0]):
+        adj = adjs[i, :node_num[i], :node_num[i]]
+        atom_type = atom_types[i, :node_num[i]]
+        adj, atom_type = legalize_valence(adj, atom_type)
+        print(adj)
+        mol = build_molecule(adj, atom_type)
+
+        try:
+            Chem.SanitizeMol(mol)
+        except ValueError:
+            smile = None
+        else:
+            smile = Chem.MolToSmiles(mol)
+        smiles.append(smile)
+
+    return smile
+
+def smile_to_xyz(smile: str) -> torch.Tensor | None:
+    mol = Chem.MolFromSmiles(smile)
+    mol = Chem.AddHs(mol)
+    rdDistGeom.EmbedMolecule(mol)
+    try:
+        conf = mol.GetConformer()
+    except:
+        pos = None
+    else:
+        pos = conf.GetPositions()
+        pos = torch.tensor(pos, dtype=torch.float)
+
+    return pos
+   
+# precated
+def srd_to_xyz(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
     # srd: B * N * D
     # node_mask: B * N
     # return: flag: B, xyz: B * N * 3
@@ -88,10 +130,12 @@ def srd_to_xyz(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.Ten
     node_num = node_mask.sum(dim=1).int()
 
     flag = torch.ones(srd.size(0), dtype=torch.bool, device=srd.device)
-    xyz = torch.zeros(srd.shape[0:-1], 3, device=srd.device)
+    xyz = torch.zeros(srd.shape[0:-1] + (3,), device=srd.device)
 
     for i in range(adj.size(0)):
-        mol = build_molecule(legalize_valence(adj[i, :node_num[i], :node_num[i]], atom_types[i, :node_num[i]]))
+        mol = build_molecule(*legalize_valence(adj[i, :node_num[i], :node_num[i]], atom_types[i, :node_num[i]]))
+        smile = Chem.MolToSmiles(mol)
+        mol = Chem.MolFromSmiles(smile)
         mol = Chem.AddHs(mol)
         rdDistGeom.EmbedMolecule(mol)
         try:
