@@ -2,7 +2,7 @@ import argparse
 from os.path import join
 import torch
 import pickle
-from qm9.models import get_model
+from qm9.models import get_model, DistributionNodes
 from configs.datasets_config import get_dataset_info
 from qm9 import dataset
 from qm9.utils import compute_mean_mad
@@ -158,8 +158,10 @@ def main_quantitative(args):
     dataloaders = get_dataloader(args_gen)
     print(args_gen)
     property_norms = compute_mean_mad(dataloaders, args_gen.conditioning, args_gen.dataset)
-    model, nodes_dist, prop_dist, _ = get_generator(args.generators_path, dataloaders,
+    model, nodes_dist, prop_dist, dataset_info = get_generator(args.generators_path, dataloaders,
                                                     args.device, args_gen, property_norms)
+    histogram = dataset_info['ranks'] 
+    dims_dist = DistributionNodes(histogram)
 
     # Create a dataloader with the generator
 
