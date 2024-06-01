@@ -69,9 +69,9 @@ class DiffusionDataloader:
         self.args_gen = args_gen
         self.model = model
         self.nodes_dist = nodes_dist
-        self.dim_dist = dims_dist
+        self.dims_dist = dims_dist
         self.prop_dist = prop_dist
-        self.batch_size = batch_size
+        self.batch_size = 2
         self.iterations = iterations
         self.device = device
         self.unkown_labels = unkown_labels
@@ -91,13 +91,11 @@ class DiffusionDataloader:
                                                 self.dataset_info, self.prop_dist, nodesxsample=nodesxsample,
                                                 context=context)
         
-        dims_mask = torch.zeros((len(nodesxsample), self.dataset_info['max_n_dims']))
+        dims_mask = torch.zeros((len(nodesxsample), self.dataset_info['max_n_dims']), device=x.device)
         for i in range(len(dimsxsample)):
             dims_mask[i, 0:dimsxsample[i]] = 1
-        dims_mask = dims_mask.squeeze(1)
+        dims_mask = dims_mask.unsqueeze(1)
         x = x * dims_mask
-
-        print(x)
 
         node_mask = node_mask.squeeze(2)
         context = context.squeeze(1)
