@@ -106,7 +106,7 @@ def srd_to_smiles(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.
 
     return smile
 
-def smiles_to_srd(smile: str) -> torch.Tensor | None:
+def smile_to_xyz(smile: str) -> torch.Tensor | None:
     mol = Chem.MolFromSmiles(smile)
     mol = Chem.AddHs(mol)
     rdDistGeom.EmbedMolecule(mol)

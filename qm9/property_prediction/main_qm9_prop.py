@@ -67,6 +67,9 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
         pred = model(h0=nodes, x=atom_positions, edges=edges, edge_attr=None, node_mask=atom_mask, edge_mask=edge_mask,
                      n_nodes=n_nodes)
 
+        unvalid_flag = data['unvalid_flag'].to(device)
+        pred = pred * (~unvalid_flag) + unvalid_flag * mean
+
 
         # print("\nPred mean")
         # print(torch.mean(torch.abs(pred)))
@@ -218,3 +221,4 @@ if __name__ == "__main__":
         json_object = json.dumps(res, indent=4)
         with open(args.outf + "/" + args.exp_name + "/losess.json", "w") as outfile:
             outfile.write(json_object)
+

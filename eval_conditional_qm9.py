@@ -11,7 +11,7 @@ from qm9.property_prediction.main_qm9_prop import test
 from qm9.property_prediction import main_qm9_prop
 from qm9.sampling import sample_chain, sample, sample_sweep_conditional
 import qm9.visualizer as vis
-from mypy.utils.molecule_transform import srd_to_smiles
+from mypy.utils.molecule_transform import srd_to_smiles, smile_to_xyz
 
 
 def get_classifier(dir_path='', device='cpu'):
@@ -103,6 +103,17 @@ class DiffusionDataloader:
         smiles = srd_to_smiles(x, node_mask, atom_types)
         print(smiles)
 
+        positions = torch.zeros((len(nodesxsample), self.dataset_info['max_n_nodes'], 3), device=x.device)
+        unvalid_flag = torch.zeros(len(nodesxsample), dtype=torch.bool, device=x.device)
+
+        for i in range(self.batch_size):
+            if smiles[i] is None:
+                unvalid_flag[i] = True
+            else:
+                position = smile_to_xyz(smiles[i])
+                assert(position.size(0) <= self.dataset_info['max_n_nodes'])
+                positions[i, 0:position.size(0)] = position
+
         node_mask = node_mask.squeeze(2)
         context = context.squeeze(1)
 
@@ -120,10 +131,11 @@ class DiffusionDataloader:
         else:
             context = context * self.prop_dist.normalizer[prop_key]['mad'] + self.prop_dist.normalizer[prop_key]['mean']
         data = {
-            'smiles': smiles,
+            'positions': positions.detach(),
             'atom_mask': node_mask.detach(),
             'edge_mask': edge_mask.detach(),
             'one_hot': one_hot.detach(),
+            'unvalid_flag': unvalid_flag.detach(),
             prop_key: context.detach()
         }
         return data
