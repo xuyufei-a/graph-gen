@@ -24,11 +24,10 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
         else:
             model.eval()
         
-        # TODO: modify 'positions' to 'srd_positions'
+        # TODO: the 'positions' is srd_positions
         # make the model to predict property by srd positions 
-        batch_size, n_nodes, _ = data['srd_positions'].size()
-#         print(data['srd_positions'].size())
-        atom_positions = data['srd_positions'].view(batch_size * n_nodes, -1).to(device, torch.float32)
+        batch_size, n_nodes, _ = data['positions'].size()
+        atom_positions = data['positions'].view(batch_size * n_nodes, -1).to(device, torch.float32)
         atom_mask = data['atom_mask'].view(batch_size * n_nodes, -1).to(device, torch.float32)
         edge_mask = data['edge_mask'].to(device, torch.float32)
         nodes = data['one_hot'].to(device, torch.float32)
@@ -219,4 +218,3 @@ if __name__ == "__main__":
         json_object = json.dumps(res, indent=4)
         with open(args.outf + "/" + args.exp_name + "/losess.json", "w") as outfile:
             outfile.write(json_object)
-
