@@ -218,4 +218,3 @@ if __name__ == "__main__":
         json_object = json.dumps(res, indent=4)
         with open(args.outf + "/" + args.exp_name + "/losess.json", "w") as outfile:
             outfile.write(json_object)
-
