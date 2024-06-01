@@ -1,9 +1,11 @@
 import torch
-from rdkit import Chem
+from rdkit import Chem, RDLogger
+from rdkit.Chem import rdDistGeom
 from typing import Tuple
 
 def inverse_SRD(x: torch.Tensor) -> torch.Tensor:
     # x: B * N * D
+    # return: B * N * N
     out = torch.matmul(x, x.transpose(1, 2))
     tmp = torch.eye(out.size(1), dtype=torch.bool).unsqueeze(0).to(out.device)
     out *= ~tmp
@@ -76,3 +78,33 @@ def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Tuple
                 adjacency[i, p] = -inf
 
     return legal_valence, atom_types
+
+def srd_to_xyz(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]
+    # srd: B * N * D
+    # node_mask: B * N
+    # return: flag: B, xyz: B * N * 3
+
+    adj = inverse_SRD(srd)
+    node_num = node_mask.sum(dim=1).int()
+
+    flag = torch.ones(srd.size(0), dtype=torch.bool, device=srd.device)
+    xyz = torch.zeros(srd.shape[0:-1], 3, device=srd.device)
+
+    for i in range(adj.size(0)):
+        mol = build_molecule(legalize_valence(adj[i, :node_num[i], :node_num[i]], atom_types[i, :node_num[i]]))
+        mol = Chem.AddHs(mol)
+        rdDistGeom.EmbedMolecule(mol)
+        try:
+            conf = mol.GetConformer()
+        except:
+            pos = None
+        else:
+            pos = conf.GetPositions()
+            pos = torch.tensor(pos, dtype=torch.float)
+
+        if pos is None:
+            flag[i] = False
+        else:
+            xyz[i, 0:node_num[i]] = pos
+
+    return flag, xyz

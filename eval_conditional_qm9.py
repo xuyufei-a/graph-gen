@@ -11,6 +11,7 @@ from qm9.property_prediction.main_qm9_prop import test
 from qm9.property_prediction import main_qm9_prop
 from qm9.sampling import sample_chain, sample, sample_sweep_conditional
 import qm9.visualizer as vis
+from mypy.utils.molecule_transform import srd_to_xyz
 
 
 def get_classifier(dir_path='', device='cpu'):
@@ -97,6 +98,11 @@ class DiffusionDataloader:
         dims_mask = dims_mask.unsqueeze(1)
         x = x * dims_mask
 
+        atom_types = one_hot.argmax(dim=2)
+        # TODO convert srd positions to real positions
+        flag, x = srd_to_xyz(x, node_mask, atom_types)
+        print(flag, x)
+
         node_mask = node_mask.squeeze(2)
         context = context.squeeze(1)
 
@@ -118,6 +124,7 @@ class DiffusionDataloader:
             'atom_mask': node_mask.detach(),
             'edge_mask': edge_mask.detach(),
             'one_hot': one_hot.detach(),
+            'flag': flag.detach(),
             prop_key: context.detach()
         }
         return data
