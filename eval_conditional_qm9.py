@@ -168,7 +168,7 @@ def main_quantitative(args):
     mean, mad = property_norms[args.property]['mean'], property_norms[args.property]['mad']
 
     if args.task == 'edm':
-        diffusion_dataloader = DiffusionDataloader(args_gen, model, nodes_dist, prop_dist,
+        diffusion_dataloader = DiffusionDataloader(args_gen, model, nodes_dist, dims_dist, prop_dist,
                                                    args.device, batch_size=args.batch_size, iterations=args.iterations)
         print("EDM: We evaluate the classifier on our generated samples")
         loss = test(classifier, 0, diffusion_dataloader, mean, mad, args.property, args.device, 1, args.debug_break)
