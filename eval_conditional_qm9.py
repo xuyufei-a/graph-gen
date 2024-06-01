@@ -28,7 +28,9 @@ def get_classifier(dir_path='', device='cpu'):
 def get_args_gen(dir_path):
     with open(join(dir_path, 'args.pickle'), 'rb') as f:
         args_gen = pickle.load(f)
-    assert args_gen.dataset == 'qm9_second_half'
+
+    # TODO: unknown use
+    # assert args_gen.dataset == 'qm9_second_half'
 
     # Add missing args!
     if not hasattr(args_gen, 'normalization_factor'):
@@ -40,7 +42,10 @@ def get_args_gen(dir_path):
 
 def get_generator(dir_path, dataloaders, device, args_gen, property_norms):
     dataset_info = get_dataset_info(args_gen.dataset, args_gen.remove_h)
-    model, nodes_dist, prop_dist = get_model(args_gen, device, dataset_info, dataloaders['train'])
+    print(dataset_info['max_n_dims'])
+
+    # TODO modify n_dims
+    model, nodes_dist, prop_dist = get_model(args_gen, device, dataset_info, dataloaders['train'], n_dims=dataset_info['max_n_dims'])
     fn = 'generative_model_ema.npy' if args_gen.ema_decay > 0 else 'generative_model.npy'
     model_state_dict = torch.load(join(dir_path, fn), map_location='cpu')
     model.load_state_dict(model_state_dict)
@@ -138,6 +143,7 @@ def main_quantitative(args):
         args_gen.aggregation_method = 'sum'
 
     dataloaders = get_dataloader(args_gen)
+    print(args_gen)
     property_norms = compute_mean_mad(dataloaders, args_gen.conditioning, args_gen.dataset)
     model, nodes_dist, prop_dist, _ = get_generator(args.generators_path, dataloaders,
                                                     args.device, args_gen, property_norms)
