@@ -7,7 +7,7 @@ from configs.datasets_config import get_dataset_info
 from qm9 import dataset
 from qm9.utils import compute_mean_mad
 from qm9.sampling import sample
-from qm9.property_prediction.main_qm9_prop_no_srd import test
+from qm9.property_prediction.main_qm9_prop import test
 from qm9.property_prediction import main_qm9_prop
 from qm9.sampling import sample_chain, sample, sample_sweep_conditional
 import qm9.visualizer as vis
