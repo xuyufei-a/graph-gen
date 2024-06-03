@@ -96,6 +96,7 @@ class BasicMolecularMetrics(object):
                 largest_mol = max(mol_frags, default=mol, key=lambda m: m.GetNumAtoms())
                 smiles = mol2smiles(largest_mol)
                 valid.append(smiles)
+                print(smiles)
 
         return valid, len(valid) / len(generated)
 
@@ -194,4 +195,3 @@ if __name__ == '__main__':
     block_mol = Chem.MolToMolBlock(chem_mol)
     print("Block mol:")
     print(block_mol)
-

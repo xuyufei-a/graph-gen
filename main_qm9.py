@@ -215,7 +215,7 @@ def main():
     # Initialize dataparallel if enabled and possible.
     if args.dp and torch.cuda.device_count() > 1:
         print(f'Training using {torch.cuda.device_count()} GPUs')
-        model_dp = torch.nn.DataParallel(model.cpu())
+        model_dp = torch.nn.DataParallel(model.cpu())f
         model_dp = model_dp.cuda()
     else:
         model_dp = model
@@ -248,17 +248,17 @@ def main():
             if isinstance(model, en_diffusion.EnVariationalDiffusion):
                 wandb.log(model.log_info(), commit=True)
 
-            if not args.break_train_epoch:
-                analyze_and_save(args=args, epoch=epoch, model_sample=model_ema, nodes_dist=nodes_dist,
-                                 dataset_info=dataset_info, device=device,
-                                 prop_dist=prop_dist, n_samples=args.n_stability_samples)
+#             if not args.break_train_epoch:
+#                 analyze_and_save(args=args, epoch=epoch, model_sample=model_ema, nodes_dist=nodes_dist,
+#                                  dataset_info=dataset_info, device=device,
+#                                  prop_dist=prop_dist, n_samples=args.n_stability_samples)
             nll_val = test(args=args, loader=dataloaders['valid'], epoch=epoch, eval_model=model_ema_dp,
                            partition='Val', device=device, dtype=dtype, nodes_dist=nodes_dist,
                            property_norms=property_norms)
-            nll_test = test(args=args, loader=dataloaders['test'], epoch=epoch, eval_model=model_ema_dp,
-                            partition='Test', device=device, dtype=dtype,
-                            nodes_dist=nodes_dist, property_norms=property_norms)
-
+#             nll_test = test(args=args, loader=dataloaders['test'], epoch=epoch, eval_model=model_ema_dp,
+#                             partition='Test', device=device, dtype=dtype,
+#                             nodes_dist=nodes_dist, property_norms=property_norms)
+            nll_test = best_nll_test
             if nll_val < best_nll_val:
                 best_nll_val = nll_val
                 best_nll_test = nll_test
