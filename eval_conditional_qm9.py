@@ -12,6 +12,7 @@ from qm9.property_prediction import main_qm9_prop
 from qm9.sampling import sample_chain, sample, sample_sweep_conditional
 import qm9.visualizer as vis
 from mypy.utils.molecule_transform import srd_to_smiles, smile_to_xyz
+from mypy.utils.check import check_mask
 
 
 def get_classifier(dir_path='', device='cpu'):
@@ -117,7 +118,9 @@ class DiffusionDataloader:
                     assert(position.size(0) <= self.dataset_info['max_n_nodes'])
                     positions[i, 0:position.size(0)] = position
 
+        check_mask(x, node_mask, dims_mask)
         node_mask = node_mask.squeeze(2)
+
         context = context.squeeze(1)
 
         # edge_mask

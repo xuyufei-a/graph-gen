@@ -27,6 +27,7 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
         # TODO: the 'positions' is srd_positions
         # make the model to predict property by srd positions 
         batch_size, n_nodes, _ = data['positions'].size()
+        print(batch_size, n_nodes, _)
         atom_positions = data['positions'].view(batch_size * n_nodes, -1).to(device, torch.float32)
         atom_mask = data['atom_mask'].view(batch_size * n_nodes, -1).to(device, torch.float32)
         edge_mask = data['edge_mask'].to(device, torch.float32)
@@ -86,7 +87,11 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
             loss.backward()
             optimizer.step()
         else:
+            # length = label.size(0)
+            # idx = torch.randperm(length)
+            # label = label[idx]
             loss = loss_l1(mad * pred + mean, label)
+            loss2 = loss_l1((mad * pred + mean) * (~unvalid_flag), label * (~unvalid_flag))
 
         res['loss'] += loss.item() * batch_size
         res['counter'] += batch_size
@@ -97,28 +102,33 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
             prefix = ">> %s \t" % partition
         
         if i % log_interval == 0:
+            torch.set_printoptions(precision=4, sci_mode=False)
             print(prefix + "Epoch %d \t Iteration %d \t loss %.4f" % (epoch, i, sum(res['loss_arr'][-10:])/len(res['loss_arr'][-10:])))
 #             print(unvalid)
-            print(mad * pred + mean, label, loss.item())
-            print(unvalid_flag)
+            # print(mad * pred + mean, label, loss.item())
+            # print(unvalid_flag)
             
             tmp = mad * pred + mean
-            smiles = data['smiles']
-            for i in range(tmp.shape[0]):
-                if tmp[i].item() > 100 or tmp[i].item() < 40:
-                    with open('doubted_mol.txt', 'a') as f:
-                        f.write(f'{smiles[i]} {tmp[i].item()}\n')
-                    print(smiles[i])
-                    print(atom_positions[i])
-                elif tmp[i].item() < 40:
-                    with open('doubted_mol2.txt', 'a') as f:
-                        f.write(f'{smiles[i]} {tmp[i].item()}\n')
-#             if loss.item() > 500:
-#                 with open('doubted_mol.txt', 'a') as f:
-#                     f.write(data['smiles'][0] + '\n')
-#                 print(atom_positions)
-#                 print(atom_positions.shape)
-#                 exit()
+            diff = (tmp - label).abs()
+
+            tmp = torch.stack([tmp, label, diff, diff * (~unvalid_flag)], dim=1)
+            print(tmp, loss.item(), loss2.item())
+            # smiles = data['smiles']
+#             for i in range(tmp.shape[0]):
+#                 if tmp[i].item() > 100 or tmp[i].item() < 40:
+#                     with open('doubted_mol.txt', 'a') as f:
+#                         f.write(f'{smiles[i]} {tmp[i].item()}\n')
+# #                     print(smiles[i])
+# #                     print(atom_positions[i])
+#                 elif tmp[i].item() < 40:
+#                     with open('doubted_mol2.txt', 'a') as f:
+#                         f.write(f'{smiles[i]} {tmp[i].item()}\n')
+# #             if loss.item() > 500:
+# #                 with open('doubted_mol.txt', 'a') as f:
+# #                     f.write(data['smiles'][0] + '\n')
+# #                 print(atom_positions)
+# #                 print(atom_positions.shape)
+# #                 exit()
         if debug_break:
             break
     return res['loss'] / res['counter']
