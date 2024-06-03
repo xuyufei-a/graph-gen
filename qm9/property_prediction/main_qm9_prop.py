@@ -66,10 +66,13 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
 
         pred = model(h0=nodes, x=atom_positions, edges=edges, edge_attr=None, node_mask=atom_mask, edge_mask=edge_mask,
                      n_nodes=n_nodes)
-
-        unvalid_flag = data['unvalid_flag'].to(device)
-        pred = pred * (~unvalid_flag) + unvalid_flag * mean
-
+        
+        unvalid = None
+        unvalid_flag = None
+        if 'unvalid_flag' in data:
+            unvalid_flag = data['unvalid_flag'].to(device)
+            pred = pred * (~unvalid_flag)
+            unvalid = unvalid_flag.sum().item()
 
         # print("\nPred mean")
         # print(torch.mean(torch.abs(pred)))
@@ -92,9 +95,30 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
         prefix = ""
         if partition != 'train':
             prefix = ">> %s \t" % partition
-
+        
         if i % log_interval == 0:
             print(prefix + "Epoch %d \t Iteration %d \t loss %.4f" % (epoch, i, sum(res['loss_arr'][-10:])/len(res['loss_arr'][-10:])))
+#             print(unvalid)
+            print(mad * pred + mean, label, loss.item())
+            print(unvalid_flag)
+            
+            tmp = mad * pred + mean
+            smiles = data['smiles']
+            for i in range(tmp.shape[0]):
+                if tmp[i].item() > 100 or tmp[i].item() < 40:
+                    with open('doubted_mol.txt', 'a') as f:
+                        f.write(f'{smiles[i]} {tmp[i].item()}\n')
+                    print(smiles[i])
+                    print(atom_positions[i])
+                elif tmp[i].item() < 40:
+                    with open('doubted_mol2.txt', 'a') as f:
+                        f.write(f'{smiles[i]} {tmp[i].item()}\n')
+#             if loss.item() > 500:
+#                 with open('doubted_mol.txt', 'a') as f:
+#                     f.write(data['smiles'][0] + '\n')
+#                 print(atom_positions)
+#                 print(atom_positions.shape)
+#                 exit()
         if debug_break:
             break
     return res['loss'] / res['counter']
@@ -170,6 +194,7 @@ if __name__ == "__main__":
     parser.add_argument('--model_name', type=str, default='numnodes', metavar='N',
                         help='egnn | naive | numnodes')
     parser.add_argument('--save_model', type=eval, default=True)
+    parser.add_argument('--resume', type=str)
 
     args = parser.parse_args()
     args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -193,6 +218,10 @@ if __name__ == "__main__":
     mean, mad = property_norms[args.property]['mean'], property_norms[args.property]['mad']
 
     model = get_model(args)
+
+    if args.resume:
+        state_dict = torch.load(args.resume)
+        model.load_state_dict(state_dict)
 
     print(model)
 
@@ -221,4 +250,3 @@ if __name__ == "__main__":
         json_object = json.dumps(res, indent=4)
         with open(args.outf + "/" + args.exp_name + "/losess.json", "w") as outfile:
             outfile.write(json_object)
-

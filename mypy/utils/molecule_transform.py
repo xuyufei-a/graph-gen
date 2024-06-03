@@ -93,7 +93,6 @@ def srd_to_smiles(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.
         adj = adjs[i, :node_num[i], :node_num[i]]
         atom_type = atom_types[i, :node_num[i]]
         adj, atom_type = legalize_valence(adj, atom_type)
-        print(adj)
         mol = build_molecule(adj, atom_type)
 
         try:
@@ -104,7 +103,7 @@ def srd_to_smiles(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.
             smile = Chem.MolToSmiles(mol)
         smiles.append(smile)
 
-    return smile
+    return smiles
 
 def smile_to_xyz(smile: str) -> torch.Tensor | None:
     mol = Chem.MolFromSmiles(smile)

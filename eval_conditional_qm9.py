@@ -7,7 +7,7 @@ from configs.datasets_config import get_dataset_info
 from qm9 import dataset
 from qm9.utils import compute_mean_mad
 from qm9.sampling import sample
-from qm9.property_prediction.main_qm9_prop import test
+from qm9.property_prediction.main_qm9_prop_no_srd import test
 from qm9.property_prediction import main_qm9_prop
 from qm9.sampling import sample_chain, sample, sample_sweep_conditional
 import qm9.visualizer as vis
@@ -43,7 +43,6 @@ def get_args_gen(dir_path):
 
 def get_generator(dir_path, dataloaders, device, args_gen, property_norms):
     dataset_info = get_dataset_info(args_gen.dataset, args_gen.remove_h)
-    print(dataset_info['max_n_dims'])
 
     # TODO modify n_dims
     model, nodes_dist, prop_dist = get_model(args_gen, device, dataset_info, dataloaders['train'], n_dims=dataset_info['max_n_dims'])
@@ -72,7 +71,8 @@ class DiffusionDataloader:
         self.nodes_dist = nodes_dist
         self.dims_dist = dims_dist
         self.prop_dist = prop_dist
-        self.batch_size = 2
+        self.batch_size = batch_size
+#         self.batch_size = 1
         self.iterations = iterations
         self.device = device
         self.unkown_labels = unkown_labels
@@ -101,18 +101,21 @@ class DiffusionDataloader:
         atom_types = one_hot.argmax(dim=2)
         # TODO convert srd positions to real positions
         smiles = srd_to_smiles(x, node_mask, atom_types)
-        print(smiles)
 
         positions = torch.zeros((len(nodesxsample), self.dataset_info['max_n_nodes'], 3), device=x.device)
         unvalid_flag = torch.zeros(len(nodesxsample), dtype=torch.bool, device=x.device)
 
         for i in range(self.batch_size):
-            if smiles[i] is None:
+#             print(smiles[i])
+            if smiles[i] is None or '.' in smiles[i]:
                 unvalid_flag[i] = True
             else:
                 position = smile_to_xyz(smiles[i])
-                assert(position.size(0) <= self.dataset_info['max_n_nodes'])
-                positions[i, 0:position.size(0)] = position
+                if position is None:
+                    unvalid_flag[i] = True
+                else:
+                    assert(position.size(0) <= self.dataset_info['max_n_nodes'])
+                    positions[i, 0:position.size(0)] = position
 
         node_mask = node_mask.squeeze(2)
         context = context.squeeze(1)
@@ -136,6 +139,8 @@ class DiffusionDataloader:
             'edge_mask': edge_mask.detach(),
             'one_hot': one_hot.detach(),
             'unvalid_flag': unvalid_flag.detach(),
+            # TODO: tmp
+            'smiles': smiles, 
             prop_key: context.detach()
         }
         return data
@@ -196,10 +201,11 @@ def main_quantitative(args):
         print("Loss classifier on qm9_second_half: %.4f" % loss)
     elif args.task == 'naive':
         print("Naive: We evaluate the classifier on QM9")
-        length = dataloaders['train'].dataset.data[args.property].size(0)
+        dataset_type = 'valid'
+        length = dataloaders[dataset_type].dataset.data[args.property].size(0)
         idxs = torch.randperm(length)
-        dataloaders['train'].dataset.data[args.property] = dataloaders['train'].dataset.data[args.property][idxs]
-        loss = test(classifier, 0, dataloaders['train'], mean, mad, args.property, args.device, args.log_interval,
+        dataloaders[dataset_type].dataset.data[args.property] = dataloaders[dataset_type].dataset.data[args.property][idxs]
+        loss = test(classifier, 0, dataloaders[dataset_type], mean, mad, args.property, args.device, args.log_interval,
                     args.debug_break)
         print("Loss classifier on naive: %.4f" % loss)
     #elif args.task == 'numnodes':

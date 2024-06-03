@@ -91,6 +91,8 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
 
         if i % log_interval == 0:
             print(prefix + "Epoch %d \t Iteration %d \t loss %.4f" % (epoch, i, sum(res['loss_arr'][-10:])/len(res['loss_arr'][-10:])))
+            # TODO
+#             print(mad * pred + mean, label, (mad * pred + mean).max().item() > 100)
         if debug_break:
             break
     return res['loss'] / res['counter']
@@ -166,6 +168,7 @@ if __name__ == "__main__":
     parser.add_argument('--model_name', type=str, default='numnodes', metavar='N',
                         help='egnn | naive | numnodes')
     parser.add_argument('--save_model', type=eval, default=True)
+    parser.add_argument('--resume', type=str)
 
     args = parser.parse_args()
     args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -189,6 +192,9 @@ if __name__ == "__main__":
     mean, mad = property_norms[args.property]['mean'], property_norms[args.property]['mad']
 
     model = get_model(args)
+    if args.resume:
+        state_dict = torch.load(args.resume)
+        model.load_state_dict(state_dict)
 
     print(model)
 
