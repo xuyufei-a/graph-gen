@@ -92,7 +92,7 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
         if i % log_interval == 0:
             print(prefix + "Epoch %d \t Iteration %d \t loss %.4f" % (epoch, i, sum(res['loss_arr'][-10:])/len(res['loss_arr'][-10:])))
             # TODO
-#             print(mad * pred + mean, label, (mad * pred + mean).max().item() > 100)
+            print(mad * pred + mean, label, (mad * pred + mean).max().item() > 100)
         if debug_break:
             break
     return res['loss'] / res['counter']

@@ -196,18 +196,18 @@ def main_quantitative(args):
         print("Loss classifier on Generated samples: %.4f" % loss)
     elif args.task == 'qm9_second_half':
         print("qm9_second_half: We evaluate the classifier on QM9")
-        loss = test(classifier, 0, dataloaders['train'], mean, mad, args.property, args.device, args.log_interval,
+        loss = test(classifier, 0, dataloaders['test'], mean, mad, args.property, args.device, args.log_interval,
                     args.debug_break)
         print("Loss classifier on qm9_second_half: %.4f" % loss)
-    elif args.task == 'naive':
-        print("Naive: We evaluate the classifier on QM9")
-        dataset_type = 'valid'
-        length = dataloaders[dataset_type].dataset.data[args.property].size(0)
-        idxs = torch.randperm(length)
-        dataloaders[dataset_type].dataset.data[args.property] = dataloaders[dataset_type].dataset.data[args.property][idxs]
-        loss = test(classifier, 0, dataloaders[dataset_type], mean, mad, args.property, args.device, args.log_interval,
-                    args.debug_break)
-        print("Loss classifier on naive: %.4f" % loss)
+#     elif args.task == 'naive':
+#         print("Naive: We evaluate the classifier on QM9")
+#         dataset_type = 'train'
+#         length = dataloaders[dataset_type].dataset.data[args.property].size(0)
+#         idxs = torch.randperm(length)
+#         dataloaders[dataset_type].dataset.data[args.property] = dataloaders[dataset_type].dataset.data[args.property][idxs]
+#         loss = test(classifier, 0, dataloaders[dataset_type], mean, mad, args.property, args.device, args.log_interval,
+#                     args.debug_break)
+#         print("Loss classifier on naive: %.4f" % loss)
     #elif args.task == 'numnodes':
     #    print("Numnodes: We evaluate the numnodes classifier on EDM samples")
     #    diffusion_dataloader = DiffusionDataloader(args_gen, model, nodes_dist, prop_dist, device,
