@@ -201,17 +201,17 @@ def process_xyz_gdb9(datafile):
     # TODO: add srd positions and dim_mask
     # TODO: specific param for qm9
     N = 29
-    D = 18
+    D = N-1
 
     smiles = xyz_lines[num_atoms+3].split()[0]
     mol = Chem.MolFromSmiles(smiles)
     mol = Chem.AddHs(mol)
     adj = Chem.GetAdjacencyMatrix(mol)
 
-    srd_positions = torch.zeros(N, N)
-    srd_positions[0:num_atoms, 0:num_atoms] = SRD(torch.tensor(adj, dtype=torch.float))
+    srd_positions = torch.zeros(N, D)
+    srd_positions[0:num_atoms, 0:num_atoms-1] = SRD(torch.tensor(adj, dtype=torch.float))
 
-    rank = torch.linalg.matrix_rank(srd_positions)
+    rank = num_atoms - 1
     dim_mask = torch.zeros(D)
     dim_mask[0:rank] = 1
     dim_mask.unsqueeze(0)
@@ -222,7 +222,7 @@ def process_xyz_gdb9(datafile):
     mask[0:num_atoms, 0:rank] = 1
     mask_srd = srd_positions * mask
     tmp = torch.zeros_like(mask_srd)
-    tmp[0:num_atoms, 0:num_atoms] = torch.tensor(adj, dtype=torch.float) + torch.diag(torch.sum(torch.tensor(adj, dtype=torch.float), dim=1))
+    tmp[0:num_atoms, 0:num_atoms] = - torch.tensor(adj, dtype=torch.float) + torch.diag(torch.sum(torch.tensor(adj, dtype=torch.float), dim=1))
     # print(torch.dist(mask_srd @ mask_srd.t(), tmp), mask_srd @ mask_srd.t(), tmp)
     assert(torch.dist(mask_srd @ mask_srd.t(), tmp) < 1e-4)
     ###############

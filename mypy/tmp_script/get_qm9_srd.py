@@ -5,7 +5,7 @@ import numpy as np
 from rdkit import Chem
 from mypy.utils.molecule_transform import SRD
 N = 29
-D = 18
+D = 28
 
 splits = get_splits()
 
@@ -35,12 +35,13 @@ def convert_data(type: str):
                 mol = Chem.AddHs(mol)
                 adj = Chem.GetAdjacencyMatrix(mol)
 
-                positions = torch.zeros(N, N)
-                positions[0:n, 0:n] = SRD(torch.tensor(adj, dtype=torch.float))
+                positions = torch.zeros(N, D)
+                tp = SRD(torch.tensor(adj, dtype=torch.float))
+                positions[:tp.shape[0], :tp.shape[1]] = tp
 
-                out_dict['positions'].append(positions[0:N, 0:D].tolist())
+                out_dict['positions'].append(positions.tolist())
 
-                rank = torch.linalg.matrix_rank(positions)
+                rank = tp.shape[1]
                 dim_mask = torch.zeros(D)
                 dim_mask[0:rank] = 1
                 dim_mask.unsqueeze(0)
@@ -61,7 +62,7 @@ def convert_data(type: str):
                 mask[0:n, 0:rank] = 1
                 posisions = positions * mask
                 tmp = torch.zeros_like(posisions)
-                tmp[0:n, 0:n] = torch.tensor(adj, dtype=torch.float) + torch.diag(torch.sum(torch.tensor(adj, dtype=torch.float), dim=1))
+                tmp[0:n, 0:n] = - torch.tensor(adj, dtype=torch.float) + torch.diag(torch.sum(torch.tensor(adj, dtype=torch.float), dim=1))
                 # print(torch.dist(posisions @ posisions.t(), tmp), posisions @ posisions.t(), tmp)
                 assert(torch.dist(posisions @ posisions.t(), tmp) < 1e-4)
                 # x = input()
