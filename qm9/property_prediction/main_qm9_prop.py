@@ -113,8 +113,15 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
 
             tmp = torch.stack([tmp, label, diff, diff * (~unvalid_flag)], dim=1)
             print(tmp, loss.item(), loss2.item())
-            # smiles = data['smiles']
-#             for i in range(tmp.shape[0]):
+
+            dim_mask = data['dim_mask']
+            smiles = data['smiles']
+            atom_nums = atom_mask.view(batch_size, n_nodes, -1).sum(dim=1)
+            dim_nums = dim_mask.sum(dim=1)
+            for i in range(tmp.shape[0]):
+                if diff[i].item() > 6:
+                    with open('bad_mol.txt', 'a') as f:
+                        f.write(f'{(mad * pred + mean)[i].item()} {label[i].item()} {unvalid_flag[i].item()} {atom_nums[i].int().item()} {dim_nums[i].int().item()} {smiles[i]}\n')
 #                 if tmp[i].item() > 100 or tmp[i].item() < 40:
 #                     with open('doubted_mol.txt', 'a') as f:
 #                         f.write(f'{smiles[i]} {tmp[i].item()}\n')

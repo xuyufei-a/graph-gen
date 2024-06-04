@@ -87,6 +87,9 @@ class DiffusionDataloader:
         # TODO: dims_mask
         nodesxsample = self.nodes_dist.sample(self.batch_size)
         dimsxsample = self.dims_dist.sample(self.batch_size)
+#         dimsxsample = nodesxsample.clone()
+
+        # print(nodesxsample, dimsxsample)
 
         context = self.prop_dist.sample_batch(nodesxsample).to(self.device)
         one_hot, charges, x, node_mask = sample(self.args_gen, self.device, self.model,
@@ -143,6 +146,7 @@ class DiffusionDataloader:
             'one_hot': one_hot.detach(),
             'unvalid_flag': unvalid_flag.detach(),
             # TODO: tmp
+            'dim_mask': dims_mask.squeeze(1).detach(),
             'smiles': smiles, 
             prop_key: context.detach()
         }
