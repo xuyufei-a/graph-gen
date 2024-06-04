@@ -3,6 +3,9 @@ from rdkit import Chem, RDLogger
 from rdkit.Chem import rdDistGeom
 from typing import Tuple, List
 
+atam_decoder = ['H', 'C', 'N', 'O', 'F']
+atom_encoder = {'H': 0, 'C': 1, 'N': 2, 'O': 3, 'F': 4}
+
 def inverse_SRD(x: torch.Tensor) -> torch.Tensor:
     # x: B * N * D
     # return: B * N * N
@@ -12,8 +15,6 @@ def inverse_SRD(x: torch.Tensor) -> torch.Tensor:
     return out
 
 def build_molecule(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Chem.Mol:
-    atam_decoder = ['H', 'C', 'N', 'O', 'F']
-
     mol = Chem.RWMol()
     for atom_type in atom_types:
         id = mol.AddAtom(Chem.Atom(atam_decoder[atom_type.item()]))
@@ -105,7 +106,7 @@ def srd_to_smiles(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.
 
     return smiles
 
-def smile_to_xyz(smile: str) -> torch.Tensor | None:
+def smile_to_xyz(smile: str) -> Tuple[torch.Tensor | None, torch.Tensor | None]:
     mol = Chem.MolFromSmiles(smile)
     mol = Chem.AddHs(mol)
     rdDistGeom.EmbedMolecule(mol)
@@ -113,11 +114,16 @@ def smile_to_xyz(smile: str) -> torch.Tensor | None:
         conf = mol.GetConformer()
     except:
         pos = None
+        one_hot = None
     else:
         pos = conf.GetPositions()
         pos = torch.tensor(pos, dtype=torch.float)
+        atom_types = [atom.GetSymbol() for atom in mol.GetAtoms()]
+        one_hot = torch.zeros((pos.size(0), 5))
+        for i, atom_type in enumerate(atom_types):
+            one_hot[i, atom_encoder[atom_type]] = 1
 
-    return pos
+    return pos, one_hot
    
 # precated
 def srd_to_xyz(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:

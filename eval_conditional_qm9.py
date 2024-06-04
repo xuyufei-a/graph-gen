@@ -114,12 +114,13 @@ class DiffusionDataloader:
             if smiles[i] is None or '.' in smiles[i]:
                 unvalid_flag[i] = True
             else:
-                position = smile_to_xyz(smiles[i])
+                position, tmp_one_hot = smile_to_xyz(smiles[i])
                 if position is None:
                     unvalid_flag[i] = True
                 else:
                     assert(position.size(0) <= self.dataset_info['max_n_nodes'])
                     positions[i, 0:position.size(0)] = position
+                    one_hot[i, 0:position.size(0)] = tmp_one_hot
 
         check_mask(x, node_mask, dims_mask)
         node_mask = node_mask.squeeze(2)
