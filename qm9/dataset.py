@@ -6,7 +6,6 @@ import os
 import numpy as np
 import torch
 
-
 def retrieve_dataloaders(cfg):
     if 'qm9' in cfg.dataset:
         batch_size = cfg.batch_size

@@ -23,11 +23,12 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
 
         else:
             model.eval()
-        
+
+
         # TODO: the 'positions' is srd_positions
         # make the model to predict property by srd positions 
         batch_size, n_nodes, _ = data['positions'].size()
-        print(batch_size, n_nodes, _)
+        # print(batch_size, n_nodes, _)
         atom_positions = data['positions'].view(batch_size * n_nodes, -1).to(device, torch.float32)
         atom_mask = data['atom_mask'].view(batch_size * n_nodes, -1).to(device, torch.float32)
         edge_mask = data['edge_mask'].to(device, torch.float32)
@@ -114,14 +115,17 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
             tmp = torch.stack([tmp, label, diff, diff * (~unvalid_flag)], dim=1)
             print(tmp, loss.item(), loss2.item())
 
-            dim_mask = data['dim_mask']
-            smiles = data['smiles']
-            atom_nums = atom_mask.view(batch_size, n_nodes, -1).sum(dim=1)
-            dim_nums = dim_mask.sum(dim=1)
-            for i in range(tmp.shape[0]):
-                if diff[i].item() > 6:
-                    with open('bad_mol.txt', 'a') as f:
-                        f.write(f'{(mad * pred + mean)[i].item()} {label[i].item()} {unvalid_flag[i].item()} {atom_nums[i].int().item()} {dim_nums[i].int().item()} {smiles[i]}\n')
+            # dim_mask = data['dim_mask']
+            # smiles = data['smiles']
+            # atom_nums = atom_mask.view(batch_size, n_nodes, -1).sum(dim=1)
+            # dim_nums = dim_mask.sum(dim=1)
+            # for i in range(tmp.shape[0]):
+            #     if diff[i].item() > 6:
+            #         with open('bad_mol.txt', 'a') as f:
+            #             f.write(f'{(mad * pred + mean)[i].item()} {label[i].item()} {unvalid_flag[i].item()} {atom_nums[i].int().item()} {dim_nums[i].int().item()} {smiles[i]}\n')
+
+
+
 #                 if tmp[i].item() > 100 or tmp[i].item() < 40:
 #                     with open('doubted_mol.txt', 'a') as f:
 #                         f.write(f'{smiles[i]} {tmp[i].item()}\n')
