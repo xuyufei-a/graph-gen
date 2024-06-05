@@ -31,11 +31,18 @@ def retrieve_dataloaders(cfg):
         # Construct PyTorch dataloaders from datasets
         preprocess = PreprocessQM9(load_charges=cfg.include_charges)
         dataloaders = {split: DataLoader(dataset,
+        #todo
+                                        # batch_size=1,
+                                        # shuffle=False,
                                          batch_size=batch_size,
                                          shuffle=args.shuffle if (split == 'train') else False,
                                          num_workers=num_workers,
                                          collate_fn=preprocess.collate_fn)
                              for split, dataset in datasets.items()}
+        
+        # for data in dataloaders['test']:
+        #     print(data['positions'])
+        #     exit()
     elif 'geom' in cfg.dataset:
         import build_geom_dataset
         from configs.datasets_config import get_dataset_info

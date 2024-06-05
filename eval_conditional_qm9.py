@@ -14,6 +14,7 @@ import qm9.visualizer as vis
 from mypy.utils.molecule_transform import srd_to_smiles, smile_to_xyz
 from mypy.utils.check import check_mask
 from mypy.utils.molecule_transform import smile_to_xyz
+from mypy.tmp_script.get_split import get_splits
 
 
 def get_classifier(dir_path='', device='cpu'):
@@ -63,8 +64,90 @@ def get_dataloader(args_gen):
     dataloaders, charge_scale = dataset.retrieve_dataloaders(args_gen)
     return dataloaders
 
+# import tarfile
+# class QM9_dataloader:
+#     def __init__(self, args):
+#         self.device = args.device
+#         file_idx_list = get_splits()['test']
+#         # print(file_idx_list)
+#         self.tot_num = len(file_idx_list)
+#         self.i = 0
+#         atom_encoder = {'H': 0, 'C': 1, 'N': 2, 'O': 3, 'F': 4}
+#         self.positions = torch.zeros((self.tot_num, 29, 3), device=args.device)
+#         self.one_hots = torch.zeros((self.tot_num, 29, 5), device=args.device, dtype=torch.bool)
+#         self.node_mask = torch.zeros((self.tot_num, 29), device=args.device)
+#         self.alpha = torch.zeros(self.tot_num, device=args.device)
+
+#         tar_path = 'qm9/temp/qm9/dsgdb9nsd.xyz.tar.bz2'
+#         tardata = tarfile.open(tar_path, 'r')
+#         files = tardata.getmembers()
+#         files = [file for idx, file in enumerate(files) if idx in file_idx_list]
+#         i = 0
+#         for file in files:
+#             with tardata.extractfile(file) as openfile:
+#                 # print(file.name)
+#                 lines = [line.decode('utf-8') for line in openfile.readlines()]
+#                 n = int(lines[0])
+#                 smile = lines[n+3].split()[0]
+#                 alpha = float(lines[1].split()[6])
+
+#                 mol_xyz = lines[2:n+2]
+#                 atom_positions = []
+#                 atom_types = []
+#                 for line in mol_xyz:
+#                     atom, posx, posy, posz, _ = line.replace('*^', 'e').split()
+#                     atom_positions.append([float(posx), float(posy), float(posz)])
+#                     atom_types.append(atom)
+#                 # print(atom_positions)
+
+#                 self.positions[i, 0:n] = torch.tensor(atom_positions)
+#                 for j in range(n):
+#                     self.node_mask[i, j] = 1
+#                     self.one_hots[i, j, atom_encoder[atom_types[j]]] = 1
+#                 self.alpha[i] = alpha 
+
+#                 i += 1
+
+#         # self.batch_size = 1
+#         # self.tot_num = 1
+#         self.batch_size = args.batch_size
+#         print('finish dataloader init')
+
+#     def __iter__(self):
+#         return self
+
+#     def __next__(self):
+
+#         if self.i < self.tot_num:
+#             positions = self.positions[self.i: self.i + self.batch_size]
+#             one_hot = self.one_hots[self.i: self.i + self.batch_size]
+#             node_mask = self.node_mask[self.i: self.i + self.batch_size]
+#             alpha = self.alpha[self.i: self.i + self.batch_size]
+
+#             bs, n_nodes = node_mask.size()
+#             edge_mask = node_mask.unsqueeze(1) * node_mask.unsqueeze(2)
+#             diag_mask = ~torch.eye(edge_mask.size(1), dtype=torch.bool).unsqueeze(0)
+#             diag_mask = diag_mask.to(self.device)
+#             edge_mask *= diag_mask
+#             edge_mask = edge_mask.view(bs * n_nodes * n_nodes, 1)
+
+#             data = {
+#                 'positions': positions.detach(),
+#                 'atom_mask': node_mask.detach(),
+#                 'edge_mask': edge_mask.detach(),
+#                 'one_hot': one_hot.detach(),
+#                 'alpha': alpha.detach(),
+#             }
+
+#             self.i += self.batch_size
+#             return data
+#         else: 
+#             self.i = 0
+#             raise StopIteration
+
 class QM9_srd_dataloader:
     def __init__(self, args):
+        self.device = args.device
         # self.tot_num = 1
         # self.batch_size = 1
         with open('qm9_smiles_alpha.txt') as f:
@@ -143,6 +226,9 @@ class QM9_srd_dataloader:
 
             bs, n_nodes = node_mask.size()
             edge_mask = node_mask.unsqueeze(1) * node_mask.unsqueeze(2)
+            diag_mask = ~torch.eye(edge_mask.size(1), dtype=torch.bool).unsqueeze(0)
+            diag_mask = diag_mask.to(self.device)
+            edge_mask *= diag_mask
             edge_mask = edge_mask.view(bs * n_nodes * n_nodes, 1)
 
             data = {
@@ -302,7 +388,7 @@ def main_quantitative(args):
         print("Loss classifier on Generated samples: %.4f" % loss)
     elif args.task == 'qm9_second_half':
         print("qm9_second_half: We evaluate the classifier on QM9")
-        loss = test(classifier, 0, dataloaders['train'], mean, mad, args.property, args.device, args.log_interval,
+        loss = test(classifier, 0, dataloaders['test'], mean, mad, args.property, args.device, args.log_interval,
                     args.debug_break)
         print("Loss classifier on qm9_second_half: %.4f" % loss)
     elif args.task == 'srd_qm9':
@@ -311,6 +397,12 @@ def main_quantitative(args):
         loss = test(classifier, 0, dataloader, mean, mad, args.property, args.device, args.log_interval,
                     args.debug_break)
         print("Loss classifier on srd_qm9: %.4f" % loss)
+    elif args.task == 'my_qm9':
+        print("my qm9")
+        dataloader = QM9_dataloader(args)
+        loss = test(classifier, 0, dataloader, mean, mad, args.property, args.device, args.log_interval,
+                    args.debug_break)
+        print("Loss classifier on my_qm9: %.4f" % loss)
 
 
 
