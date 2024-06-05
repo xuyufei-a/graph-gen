@@ -109,7 +109,8 @@ def srd_to_smiles(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.
 def smile_to_xyz(smile: str) -> Tuple[torch.Tensor | None, torch.Tensor | None]:
     mol = Chem.MolFromSmiles(smile)
     mol = Chem.AddHs(mol)
-    result = rdDistGeom.EmbedMolecule(mol, randomSeed=42, maxAttempts=1000)
+    # result = rdDistGeom.EmbedMolecule(mol, randomSeed=42, maxAttempts=1000)
+    result = rdDistGeom.EmbedMolecule(mol)
 
     try:
         assert result != -1
@@ -117,7 +118,7 @@ def smile_to_xyz(smile: str) -> Tuple[torch.Tensor | None, torch.Tensor | None]:
         print(f"fail embedding on {smile}")
         return None, None
 
-    AllChem.UFFOptimizeMolecule(mol)
+    # AllChem.UFFOptimizeMolecule(mol)
     pos = mol.GetConformer().GetPositions()
     pos = torch.tensor(pos, dtype=torch.float)
     atom_types = [atom.GetSymbol() for atom in mol.GetAtoms()]

@@ -69,12 +69,12 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
         pred = model(h0=nodes, x=atom_positions, edges=edges, edge_attr=None, node_mask=atom_mask, edge_mask=edge_mask,
                      n_nodes=n_nodes)
         
-        unvalid = None
         unvalid_flag = None
         if 'unvalid_flag' in data:
             unvalid_flag = data['unvalid_flag'].to(device)
             pred = pred * (~unvalid_flag)
-            unvalid = unvalid_flag.sum().item()
+        else:
+            unvalid_flag = torch.zeros_like(label, dtype=torch.bool)
 
         # print("\nPred mean")
         # print(torch.mean(torch.abs(pred)))
@@ -119,7 +119,11 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
             # smiles = data['smiles']
             # atom_nums = atom_mask.view(batch_size, n_nodes, -1).sum(dim=1)
             # dim_nums = dim_mask.sum(dim=1)
+
+            # positions = data['positions']
             # for i in range(tmp.shape[0]):
+            #     if (label[i] - 57.23).abs().item() < 0.1 and (positions[i, 0, 1] - 1.5):
+            #         print("position: ", positions[i])
             #     if diff[i].item() > 6:
             #         with open('bad_mol.txt', 'a') as f:
             #             f.write(f'{(mad * pred + mean)[i].item()} {label[i].item()} {unvalid_flag[i].item()} {atom_nums[i].int().item()} {dim_nums[i].int().item()} {smiles[i]}\n')

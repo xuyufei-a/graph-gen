@@ -65,6 +65,8 @@ def get_dataloader(args_gen):
 
 class QM9_srd_dataloader:
     def __init__(self, args):
+        # self.tot_num = 1
+        # self.batch_size = 1
         with open('qm9_smiles_alpha.txt') as f:
             lines = f.readlines()
             smiles = [line.split()[0] for line in lines]
@@ -78,7 +80,7 @@ class QM9_srd_dataloader:
         self.unvalid_flag = torch.zeros((self.tot_num), dtype=torch.bool, device=args.device)
 
         for i, smile in enumerate(smiles):
-            print(f'{i}_th data')
+            # print(f'{i}_th data')
             pos, one_hot = smile_to_xyz(smile)
             if pos is None:
                 self.unvalid_flag[i] = True
@@ -98,6 +100,41 @@ class QM9_srd_dataloader:
 
     def __next__(self):
         if self.i < self.tot_num:
+            # positions = torch.tensor([[[-0.0233,  1.5153,  0.0190],
+            #                         [-0.0060,  0.0068,  0.0140],
+            #                         [ 0.5533, -0.9681, -1.0521],
+            #                         [ 0.0166, -1.9454,  0.0072],
+            #                         [ 0.6515, -0.9741,  1.0168],
+            #                         [-1.1893, -0.9922,  0.0674],
+            #                         [ 0.9933,  1.9206, -0.0281],
+            #                         [-0.5803,  1.9052, -0.8399],
+            #                         [-0.4966,  1.9004,  0.9289],
+            #                         [ 0.0331, -1.0372, -2.0123],
+            #                         [ 1.6382, -1.0214, -1.1847],
+            #                         [ 1.7441, -1.0279,  1.0458],
+            #                         [ 0.2244, -1.0489,  2.0215],
+            #                         [-1.7595, -1.0685,  0.9983],
+            #                         [-1.8450, -1.0629, -0.8058],
+            #                         [0, 0, 0]]])
+            # one_hot = torch.tensor([[[0., 1., 0., 0., 0.],
+            #                         [0., 1., 0., 0., 0.],
+            #                         [0., 1., 0., 0., 0.],
+            #                         [0., 0., 1., 0., 0.],
+            #                         [0., 1., 0., 0., 0.],
+            #                         [0., 1., 0., 0., 0.],
+            #                         [1., 0., 0., 0., 0.],
+            #                         [1., 0., 0., 0., 0.],
+            #                         [1., 0., 0., 0., 0.],
+            #                         [1., 0., 0., 0., 0.],
+            #                         [1., 0., 0., 0., 0.],
+            #                         [1., 0., 0., 0., 0.],
+            #                         [1., 0., 0., 0., 0.],
+            #                         [1., 0., 0., 0., 0.],
+            #                         [1., 0., 0., 0., 0.],
+            #                         [0, 0, 0, 0, 0]]])
+            # node_mask = torch.tensor([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0]])
+            # unvalid_flag = torch.zeros(len(one_hot), dtype=torch.bool)
+            # alpha = torch.tensor([57.23])
             positions = self.positions[self.i: self.i + self.batch_size]
             one_hot = self.one_hots[self.i: self.i + self.batch_size]
             node_mask = self.node_mask[self.i: self.i + self.batch_size]
@@ -265,7 +302,7 @@ def main_quantitative(args):
         print("Loss classifier on Generated samples: %.4f" % loss)
     elif args.task == 'qm9_second_half':
         print("qm9_second_half: We evaluate the classifier on QM9")
-        loss = test(classifier, 0, dataloaders['test'], mean, mad, args.property, args.device, args.log_interval,
+        loss = test(classifier, 0, dataloaders['train'], mean, mad, args.property, args.device, args.log_interval,
                     args.debug_break)
         print("Loss classifier on qm9_second_half: %.4f" % loss)
     elif args.task == 'srd_qm9':
@@ -273,7 +310,7 @@ def main_quantitative(args):
         dataloader = QM9_srd_dataloader(args)
         loss = test(classifier, 0, dataloader, mean, mad, args.property, args.device, args.log_interval,
                     args.debug_break)
-        print("Loss classifier on qm9_second_half: %.4f" % loss)
+        print("Loss classifier on srd_qm9: %.4f" % loss)
 
 
 
