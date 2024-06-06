@@ -120,13 +120,13 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
             tmp = torch.stack([tmp, label, diff, diff * (~unvalid_flag)], dim=1)
             print(tmp, loss.item(), loss2.item())
 
-            # dim_mask = data['dim_mask']
-            # smiles = data['smiles']
-            # atom_nums = atom_mask.view(batch_size, n_nodes, -1).sum(dim=1)
-            # dim_nums = dim_mask.sum(dim=1)
+            dim_mask = data['dim_mask']
+            smiles = data['smiles']
+            atom_nums = atom_mask.view(batch_size, n_nodes, -1).sum(dim=1)
+            dim_nums = dim_mask.sum(dim=1)
 
-            # positions = data['positions']
-            # for i in range(tmp.shape[0]):
+            positions = data['positions']
+            for i in range(tmp.shape[0]):
             #     if (label[i] - 57.23).abs().item() < 0.1 and (positions[i, 0, 1] - 1.5):
             #         print("position: ", positions[i])
             #     if diff[i].item() > 6:
@@ -135,7 +135,7 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
 
 
 
-#                 if tmp[i].item() > 100 or tmp[i].item() < 40:
+#                 if tmp[i].item() > 1000:
 #                     with open('doubted_mol.txt', 'a') as f:
 #                         f.write(f'{smiles[i]} {tmp[i].item()}\n')
 # #                     print(smiles[i])

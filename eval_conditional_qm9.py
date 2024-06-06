@@ -295,7 +295,9 @@ class DiffusionDataloader:
 
         for i in range(self.batch_size):
 #             print(smiles[i])
+            # todo: test
             if smiles[i] is None or '.' in smiles[i]:
+#             if smiles[i] is None:
                 unvalid_flag[i] = True
             else:
                 position, tmp_one_hot = smile_to_xyz(smiles[i])
