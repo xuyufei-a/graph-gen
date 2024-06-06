@@ -126,7 +126,7 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
             dim_nums = dim_mask.sum(dim=1)
 
             positions = data['positions']
-            for i in range(tmp.shape[0]):
+#             for i in range(tmp.shape[0]):
             #     if (label[i] - 57.23).abs().item() < 0.1 and (positions[i, 0, 1] - 1.5):
             #         print("position: ", positions[i])
             #     if diff[i].item() > 6:
@@ -135,9 +135,9 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
 
 
 
-#                 if tmp[i].item() > 1000:
+#                 if '.' in smiles[i]:
 #                     with open('doubted_mol.txt', 'a') as f:
-#                         f.write(f'{smiles[i]} {tmp[i].item()}\n')
+#                         f.write(f'{smiles[i]} {tmp[i][0].item()}\n')
 # #                     print(smiles[i])
 # #                     print(atom_positions[i])
 #                 elif tmp[i].item() < 40:
