@@ -33,4 +33,5 @@ geom_drugs.sh
 *.ipynb*
 *.pt
 log*
-
+*.out
+originalmodel

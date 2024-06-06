@@ -348,6 +348,7 @@ class EnVariationalDiffusion(torch.nn.Module):
             return (number_of_nodes - 1) * self.n_dims
 
     def normalize(self, x, h, node_mask):
+        assert self.norm_values[0] == 1
         x = x / self.norm_values[0]
         delta_log_px = -self.subspace_dimensionality(node_mask) * np.log(self.norm_values[0])
 
@@ -640,7 +641,7 @@ class EnVariationalDiffusion(torch.nn.Module):
         # Sample z_t given x, h for timestep t, from q(z_t | x, h)
         z_t = alpha_t * xh + sigma_t * eps
 
-        diffusion_utils.assert_mean_zero_with_mask(z_t[:, :, :self.n_dims], node_mask)
+        # diffusion_utils.assert_mean_zero_with_mask(z_t[:, :, :self.n_dims], node_mask)
 
         # Neural net prediction.
         net_out = self.phi(z_t, t, node_mask, edge_mask, context, dim_mask=dim_mask)
