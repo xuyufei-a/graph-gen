@@ -198,7 +198,7 @@ optim = get_optim(args, model)
 # print(model)
 
 gradnorm_queue = utils.Queue()
-gradnorm_queue.add(3000)  # Add large value that will be flushed.
+gradnorm_queue.add(1)  # Add large value that will be flushed.
 
 
 def check_mask_correct(variables, node_mask):

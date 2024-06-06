@@ -9,7 +9,7 @@ atom_encoder = {'H': 0, 'C': 1, 'N': 2, 'O': 3, 'F': 4}
 def inverse_SRD(x: torch.Tensor) -> torch.Tensor:
     # x: B * N * D
     # return: B * N * N
-    out = torch.matmul(x, x.transpose(1, 2))
+    out = - torch.matmul(x, x.transpose(1, 2))
     tmp = torch.eye(out.size(1), dtype=torch.bool).unsqueeze(0).to(out.device)
     out *= ~tmp
     return out
@@ -27,13 +27,15 @@ def build_molecule(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Chem.Mo
 
     return mol
 
-def SRD(adj: torch.Tensor, N: int=29, D:int=18) -> torch.Tensor:
+def SRD(adj: torch.Tensor, N: int=29, D:int=28) -> torch.Tensor:
     # adj: n * n
     
     degree = torch.sum(adj, dim=1)
-    A = adj + torch.diag(degree)
+    L = - adj + torch.diag(degree)
 
-    val, vec = torch.linalg.eigh(A)
+    val, vec = torch.linalg.eigh(L)
+
+    val, vec = val[1:], vec[:, 1:]
 
     sort_indices = torch.argsort(val, descending=True)
     val = val[sort_indices]
@@ -41,7 +43,7 @@ def SRD(adj: torch.Tensor, N: int=29, D:int=18) -> torch.Tensor:
     val = val.clamp(0, None)
 
     ret = vec @ torch.diag(val ** 0.5)
-    assert(torch.dist(ret @ ret.t(), A) < 1e-4)
+    assert(torch.dist(ret @ ret.t(), L) < 1e-4)
     return  ret
 
 def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:

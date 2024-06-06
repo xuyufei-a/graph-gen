@@ -38,19 +38,19 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
 #         a = input()
 #         continue
 
-        x = remove_mean_with_mask(x, node_mask)
+        # x = remove_mean_with_mask(x, node_mask)
 
         if args.augment_noise > 0:
             # Add noise eps ~ N(0, augment_noise) around points.
             eps = sample_center_gravity_zero_gaussian_with_mask(x.size(), x.device, node_mask)
             x = x + eps * args.augment_noise
 
-        x = remove_mean_with_mask(x, node_mask)
-        if args.data_augmentation:
-            x = utils.random_rotation(x).detach()
+        # x = remove_mean_with_mask(x, node_mask)
+        # if args.data_augmentation: # may destroy dim mask
+        #    x = utils.random_rotation(x).detach()
 
         check_mask_correct([x, one_hot, charges], node_mask)
-        assert_mean_zero_with_mask(x, node_mask)
+        # assert_mean_zero_with_mask(x, node_mask)
 
         h = {'categorical': one_hot, 'integer': charges}
 
@@ -139,9 +139,9 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
                                                                     node_mask)
                 x = x + eps * args.augment_noise
 
-            x = remove_mean_with_mask(x, node_mask)
+            # x = remove_mean_with_mask(x, node_mask)
             check_mask_correct([x, one_hot, charges], node_mask)
-            assert_mean_zero_with_mask(x, node_mask)
+            # assert_mean_zero_with_mask(x, node_mask)
 
             h = {'categorical': one_hot, 'integer': charges}
 
