@@ -93,7 +93,6 @@ class PreprocessQM9:
         diag_mask = ~torch.eye(edge_mask.size(1), dtype=torch.bool).unsqueeze(0)
         edge_mask *= diag_mask
 
-        #edge_mask = atom_mask.unsqueeze(1) * atom_mask.unsqueeze(2)
         batch['edge_mask'] = edge_mask.view(batch_size * n_nodes * n_nodes, 1)
 
         if self.load_charges:

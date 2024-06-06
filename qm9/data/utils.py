@@ -68,6 +68,7 @@ def initialize_datasets(args, datadir, dataset, subset=None, splits=None,
                 # val) if key != "SLIMES" else val for key, val in f.items()}
             datasets[split] = {key: torch.from_numpy(
                 val) for key, val in f.items()}
+
             
             # TODO: display data load
             # for key, val in f.items():
@@ -122,6 +123,7 @@ def initialize_datasets(args, datadir, dataset, subset=None, splits=None,
     all_species = _get_species(datasets, ignore_check=False)
 
     # Now initialize MolecularDataset based upon loaded data
+    # todo
     datasets = {split: ProcessedDataset(data, num_pts=num_pts.get(
         split, -1), included_species=all_species, subtract_thermo=subtract_thermo) for split, data in datasets.items()}
 
@@ -140,6 +142,7 @@ def initialize_datasets(args, datadir, dataset, subset=None, splits=None,
     args.num_valid = datasets['valid'].num_pts
     args.num_test = datasets['test'].num_pts
 
+    # print(datasets['test'][0])
     return args, datasets, num_species, max_charge
 
 

@@ -23,15 +23,21 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
 
         else:
             model.eval()
-        
+
+
         # TODO: the 'positions' is srd_positions
         # make the model to predict property by srd positions 
         batch_size, n_nodes, _ = data['positions'].size()
-        print(batch_size, n_nodes, _)
+        # print(batch_size, n_nodes, _)
         atom_positions = data['positions'].view(batch_size * n_nodes, -1).to(device, torch.float32)
         atom_mask = data['atom_mask'].view(batch_size * n_nodes, -1).to(device, torch.float32)
         edge_mask = data['edge_mask'].to(device, torch.float32)
         nodes = data['one_hot'].to(device, torch.float32)
+        # print(atom_positions)
+        # print(atom_mask)
+        # print(edge_mask.squeeze())
+        # print(nodes)
+        # exit()
         #charges = data['charges'].to(device, dtype).squeeze(2)
         #nodes = prop_utils.preprocess_input(one_hot, charges, args.charge_power, charge_scale, device)
 
@@ -68,12 +74,12 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
         pred = model(h0=nodes, x=atom_positions, edges=edges, edge_attr=None, node_mask=atom_mask, edge_mask=edge_mask,
                      n_nodes=n_nodes)
         
-        unvalid = None
         unvalid_flag = None
         if 'unvalid_flag' in data:
             unvalid_flag = data['unvalid_flag'].to(device)
             pred = pred * (~unvalid_flag)
-            unvalid = unvalid_flag.sum().item()
+        else:
+            unvalid_flag = torch.zeros_like(label, dtype=torch.bool)
 
         # print("\nPred mean")
         # print(torch.mean(torch.abs(pred)))
@@ -114,14 +120,21 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
             tmp = torch.stack([tmp, label, diff, diff * (~unvalid_flag)], dim=1)
             print(tmp, loss.item(), loss2.item())
 
-            dim_mask = data['dim_mask']
-            smiles = data['smiles']
-            atom_nums = atom_mask.view(batch_size, n_nodes, -1).sum(dim=1)
-            dim_nums = dim_mask.sum(dim=1)
-            for i in range(tmp.shape[0]):
-                if diff[i].item() > 6:
-                    with open('bad_mol.txt', 'a') as f:
-                        f.write(f'{(mad * pred + mean)[i].item()} {label[i].item()} {unvalid_flag[i].item()} {atom_nums[i].int().item()} {dim_nums[i].int().item()} {smiles[i]}\n')
+            # dim_mask = data['dim_mask']
+            # smiles = data['smiles']
+            # atom_nums = atom_mask.view(batch_size, n_nodes, -1).sum(dim=1)
+            # dim_nums = dim_mask.sum(dim=1)
+
+            # positions = data['positions']
+            # for i in range(tmp.shape[0]):
+            #     if (label[i] - 57.23).abs().item() < 0.1 and (positions[i, 0, 1] - 1.5):
+            #         print("position: ", positions[i])
+            #     if diff[i].item() > 6:
+            #         with open('bad_mol.txt', 'a') as f:
+            #             f.write(f'{(mad * pred + mean)[i].item()} {label[i].item()} {unvalid_flag[i].item()} {atom_nums[i].int().item()} {dim_nums[i].int().item()} {smiles[i]}\n')
+
+
+
 #                 if tmp[i].item() > 100 or tmp[i].item() < 40:
 #                     with open('doubted_mol.txt', 'a') as f:
 #                         f.write(f'{smiles[i]} {tmp[i].item()}\n')

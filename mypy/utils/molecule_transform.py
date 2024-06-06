@@ -1,6 +1,6 @@
 import torch
 from rdkit import Chem, RDLogger
-from rdkit.Chem import rdDistGeom
+from rdkit.Chem import rdDistGeom, AllChem
 from typing import Tuple, List
 
 atam_decoder = ['H', 'C', 'N', 'O', 'F']
@@ -111,21 +111,57 @@ def srd_to_smiles(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.
 def smile_to_xyz(smile: str) -> Tuple[torch.Tensor | None, torch.Tensor | None]:
     mol = Chem.MolFromSmiles(smile)
     mol = Chem.AddHs(mol)
-    rdDistGeom.EmbedMolecule(mol)
+    result = rdDistGeom.EmbedMolecule(mol, randomSeed=42, maxAttempts=1000)
+    # result = rdDistGeom.EmbedMolecule(mol)
+
     try:
-        conf = mol.GetConformer()
+        assert result != -1
     except:
-        pos = None
-        one_hot = None
-    else:
-        pos = conf.GetPositions()
-        pos = torch.tensor(pos, dtype=torch.float)
-        atom_types = [atom.GetSymbol() for atom in mol.GetAtoms()]
-        one_hot = torch.zeros((pos.size(0), 5))
-        for i, atom_type in enumerate(atom_types):
-            one_hot[i, atom_encoder[atom_type]] = 1
+        print(f"fail embedding on {smile}")
+        return None, None
+
+    AllChem.UFFOptimizeMolecule(mol)
+    pos = mol.GetConformer().GetPositions()
+    pos = torch.tensor(pos, dtype=torch.float)
+    atom_types = [atom.GetSymbol() for atom in mol.GetAtoms()]
+    one_hot = torch.zeros((pos.size(0), 5))
+    for i, atom_type in enumerate(atom_types):
+        one_hot[i, atom_encoder[atom_type]] = 1
 
     return pos, one_hot
+
+#     from pyscf import gto, dft
+#     from pyscf.geomopt import geometric_solver
+#     import cupy as cp
+
+#     mol = Chem.MolFromSmiles(smile)
+#     mol = Chem.AddHs(mol)
+#     result = rdDistGeom.EmbedMolecule(mol, randomSeed=42, maxAttempts=1000)
+#     assert result != -1, "fail embedding"
+
+#     AllChem.UFFOptimizeMolecule(mol)
+#     coords = mol.GetConformer().GetPositions()
+#     symbols = [atom.GetSymbol() for atom in mol.GetAtoms()]
+
+#     pyscf_mol = gto.M(
+#         atom=[(symbols[i], coords[i]) for i in range(len(symbols))],
+#         # basis='6-31g'
+#         basis='6-31G(2df,p)'
+#     )
+
+#     dft.numint.libxc = cp
+#     mf = dft.RKS(pyscf_mol)
+#     mf.xc = 'B3LYP'
+#     mf.kernel()
+#     new_mol = geometric_solver.optimize(mf)
+#     optimized_coords = new_mol.atom_coords()
+
+#     optimized_coords = torch.tensor(optimized_coords)
+#     one_hot = torch.zeros(optimized_coords.size(0), 5)
+#     for i, symbol in enumerate(symbols):
+#         one_hot[i, atom_encoder[symbol]] = 1
+
+#     return optimized_coords, one_hot
    
 # precated
 def srd_to_xyz(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
