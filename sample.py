@@ -18,6 +18,7 @@ from qm9.analyze import check_stability
 from os.path import join
 from qm9.sampling import sample_chain, sample
 from configs.datasets_config import get_dataset_info
+from mypy.utils.molecule_transform import inverse_SRD, srd_to_smiles
 import os
 
 def check_mask_correct(variables, node_mask):
@@ -88,6 +89,12 @@ def sample_different_sizes_and_dims(args, eval_args, device, generative_model,
     one_hot, charges, x, node_mask = sample(
         args, device, generative_model, dataset_info,
         nodesxsample=nodesxsample)
+    
+    torch.set_printoptions(precision=4, sci_mode=False)
+    print('positions')
+    print(inverse_SRD(x))
+    atom_type = one_hot.argmax(dim=2)
+    print(srd_to_smiles(x, node_mask, atom_type))
 
     save_point_file(
         join(eval_args.model_path, 'eval/molecules/'), one_hot, charges, x,
@@ -158,6 +165,7 @@ def main():
         help='N tries to find stable molecule for gif animation')
     parser.add_argument('--n_nodes', type=int, default=19,
                         help='number of atoms in molecule for gif animation')
+    parser.add_argument('--n_samples', type=int, default=10)
 
     eval_args, unparsed_args = parser.parse_known_args()
 
@@ -205,7 +213,7 @@ def main():
     dims_dist = DistributionNodes(histogram)
     sample_different_sizes_and_dims(
         args, eval_args, device, flow, nodes_dist, dims_dist=dims_dist,
-        dataset_info=dataset_info, n_samples=1)
+        dataset_info=dataset_info, n_samples=eval_args.n_samples)
     print('finished')
 
 if __name__ == "__main__":

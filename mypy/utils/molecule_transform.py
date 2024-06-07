@@ -19,7 +19,7 @@ def build_molecule(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Chem.Mo
     for atom_type in atom_types:
         id = mol.AddAtom(Chem.Atom(atam_decoder[atom_type.item()]))
 
-    bond_dict = [None, Chem.rdchem.BondType.SINGLE, Chem.rdchem.BondType.DOUBLE, Chem.rdchem.BondType.TRIPLE]
+    bond_dict = [None, Chem.rdchem.BondType.SINGLE, Chem.rdchem.BondType.DOUBLE, Chem.rdchem.BondType.TRIPLE, ]
 
     bonds = torch.nonzero(torch.triu(adjacency))
     for bond in bonds:

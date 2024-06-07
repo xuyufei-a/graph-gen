@@ -13,7 +13,7 @@ from qm9.sampling import sample_chain, sample, sample_sweep_conditional
 import qm9.visualizer as vis
 from mypy.utils.molecule_transform import srd_to_smiles, smile_to_xyz
 from mypy.utils.check import check_mask
-from mypy.utils.molecule_transform import smile_to_xyz
+from mypy.utils.molecule_transform import smile_to_xyz, inverse_SRD
 from mypy.tmp_script.get_split import get_splits
 
 
@@ -289,6 +289,9 @@ class DiffusionDataloader:
         atom_types = one_hot.argmax(dim=2)
         # TODO convert srd positions to real positions
         smiles = srd_to_smiles(x, node_mask, atom_types)
+#         print('positions')
+#         print(inverse_SRD(x))
+#         print(smiles)
 
         positions = torch.zeros((len(nodesxsample), self.dataset_info['max_n_nodes'], 3), device=x.device)
         unvalid_flag = torch.zeros(len(nodesxsample), dtype=torch.bool, device=x.device)
@@ -472,6 +475,7 @@ if __name__ == "__main__":
                         help='naive, edm, qm9_second_half, qualitative')
     parser.add_argument('--n_sweeps', type=int, default=10,
                         help='number of sweeps for the qualitative conditional experiment')
+
 
     args = parser.parse_args()
     args.cuda = not args.no_cuda and torch.cuda.is_available()
