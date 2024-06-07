@@ -270,8 +270,8 @@ class DiffusionDataloader:
     def sample(self):
         # TODO: dims_mask
         nodesxsample = self.nodes_dist.sample(self.batch_size)
-        dimsxsample = self.dims_dist.sample(self.batch_size)
-#         dimsxsample = nodesxsample.clone()
+#         dimsxsample = self.dims_dist.sample(self.batch_size)
+        dimsxsample = nodesxsample.clone() - 1
 
         # print(nodesxsample, dimsxsample)
 

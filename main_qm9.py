@@ -210,9 +210,9 @@ def check_mask_correct(variables, node_mask):
 def main():
     if args.resume is not None:
         flow_state_dict = torch.load(join(args.resume, 'flow.npy'))
-        optim_state_dict = torch.load(join(args.resume, 'optim.npy'))
+#         optim_state_dict = torch.load(join(args.resume, 'optim.npy'))
         model.load_state_dict(flow_state_dict)
-        optim.load_state_dict(optim_state_dict)
+#         optim.load_state_dict(optim_state_dict)
 
     # Initialize dataparallel if enabled and possible.
     if args.dp and torch.cuda.device_count() > 1:

@@ -124,8 +124,10 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
             smiles = data['smiles']
             atom_nums = atom_mask.view(batch_size, n_nodes, -1).sum(dim=1)
             dim_nums = dim_mask.sum(dim=1)
+            print(atom_nums, dim_nums)
 
             positions = data['positions']
+            print(smiles)
 #             for i in range(tmp.shape[0]):
             #     if (label[i] - 57.23).abs().item() < 0.1 and (positions[i, 0, 1] - 1.5):
             #         print("position: ", positions[i])
