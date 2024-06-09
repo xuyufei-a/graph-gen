@@ -91,8 +91,11 @@ def sample_different_sizes_and_dims(args, eval_args, device, generative_model,
         nodesxsample=nodesxsample)
     
     torch.set_printoptions(precision=4, sci_mode=False)
-    print('positions')
-    print(inverse_SRD(x))
+    print('adj')
+    
+    adjs = inverse_SRD(x)
+    for i in range(len(adjs)):
+        print(adjs[i])
     atom_type = one_hot.argmax(dim=2)
     print(srd_to_smiles(x, node_mask, atom_type))
 

@@ -183,41 +183,6 @@ class QM9_srd_dataloader:
 
     def __next__(self):
         if self.i < self.tot_num:
-            # positions = torch.tensor([[[-0.0233,  1.5153,  0.0190],
-            #                         [-0.0060,  0.0068,  0.0140],
-            #                         [ 0.5533, -0.9681, -1.0521],
-            #                         [ 0.0166, -1.9454,  0.0072],
-            #                         [ 0.6515, -0.9741,  1.0168],
-            #                         [-1.1893, -0.9922,  0.0674],
-            #                         [ 0.9933,  1.9206, -0.0281],
-            #                         [-0.5803,  1.9052, -0.8399],
-            #                         [-0.4966,  1.9004,  0.9289],
-            #                         [ 0.0331, -1.0372, -2.0123],
-            #                         [ 1.6382, -1.0214, -1.1847],
-            #                         [ 1.7441, -1.0279,  1.0458],
-            #                         [ 0.2244, -1.0489,  2.0215],
-            #                         [-1.7595, -1.0685,  0.9983],
-            #                         [-1.8450, -1.0629, -0.8058],
-            #                         [0, 0, 0]]])
-            # one_hot = torch.tensor([[[0., 1., 0., 0., 0.],
-            #                         [0., 1., 0., 0., 0.],
-            #                         [0., 1., 0., 0., 0.],
-            #                         [0., 0., 1., 0., 0.],
-            #                         [0., 1., 0., 0., 0.],
-            #                         [0., 1., 0., 0., 0.],
-            #                         [1., 0., 0., 0., 0.],
-            #                         [1., 0., 0., 0., 0.],
-            #                         [1., 0., 0., 0., 0.],
-            #                         [1., 0., 0., 0., 0.],
-            #                         [1., 0., 0., 0., 0.],
-            #                         [1., 0., 0., 0., 0.],
-            #                         [1., 0., 0., 0., 0.],
-            #                         [1., 0., 0., 0., 0.],
-            #                         [1., 0., 0., 0., 0.],
-            #                         [0, 0, 0, 0, 0]]])
-            # node_mask = torch.tensor([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0]])
-            # unvalid_flag = torch.zeros(len(one_hot), dtype=torch.bool)
-            # alpha = torch.tensor([57.23])
             positions = self.positions[self.i: self.i + self.batch_size]
             one_hot = self.one_hots[self.i: self.i + self.batch_size]
             node_mask = self.node_mask[self.i: self.i + self.batch_size]
@@ -270,8 +235,8 @@ class DiffusionDataloader:
     def sample(self):
         # TODO: dims_mask
         nodesxsample = self.nodes_dist.sample(self.batch_size)
-        dimsxsample = self.dims_dist.sample(self.batch_size)
-#         dimsxsample = nodesxsample.clone() - 1
+#         dimsxsample = self.dims_dist.sample(self.batch_size)
+        dimsxsample = nodesxsample.clone() - 1
 
         # print(nodesxsample, dimsxsample)
 
@@ -289,9 +254,9 @@ class DiffusionDataloader:
         atom_types = one_hot.argmax(dim=2)
         # TODO convert srd positions to real positions
         smiles = srd_to_smiles(x, node_mask, atom_types)
-#         print('positions')
-#         print(inverse_SRD(x))
-#         print(smiles)
+        print('positions')
+        print(inverse_SRD(x))
+        print(smiles)
 
         positions = torch.zeros((len(nodesxsample), self.dataset_info['max_n_nodes'], 3), device=x.device)
         unvalid_flag = torch.zeros(len(nodesxsample), dtype=torch.bool, device=x.device)
