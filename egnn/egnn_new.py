@@ -260,12 +260,10 @@ class SinusoidsEmbeddingNew(nn.Module):
 
 def coord2diff(x, edge_index, norm_constant=1):
     row, col = edge_index
-    coord_diff = x[col] * torch.rsqrt(torch.sum(torch.square(x), dim=-1, keepdim=True)+1e-4)[col]
-    
-    # todo: wrong radial?
-#     radial = torch.sum((x[row] * x[col]) ** 2, 1).unsqueeze(1)
-    radial = torch.sum((x[row] - x[col]) ** 2, 1).unsqueeze(1)
-    coord_diff = coord_diff
+    coord_diff = x[row] - x[col]
+    radial = torch.sum((coord_diff) ** 2, 1).unsqueeze(1)
+    norm = torch.sqrt(radial + 1e-8)
+    coord_diff = coord_diff/(norm + norm_constant)
     return radial, coord_diff
 
 
