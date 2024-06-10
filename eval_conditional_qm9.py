@@ -48,7 +48,7 @@ def get_generator(dir_path, dataloaders, device, args_gen, property_norms):
     dataset_info = get_dataset_info(args_gen.dataset, args_gen.remove_h)
 
     # TODO modify n_dims
-    model, nodes_dist, prop_dist = get_model(args_gen, device, dataset_info, dataloaders['train'], n_dims=dataset_info['max_n_dims'])
+    model, nodes_dist, prop_dist = get_model(args_gen, device, dataset_info, dataloaders['train'], n_dims=dataset_info['max_n_nodes']-1)
     fn = 'generative_model_ema.npy' if args_gen.ema_decay > 0 else 'generative_model.npy'
     model_state_dict = torch.load(join(dir_path, fn), map_location='cpu')
     model.load_state_dict(model_state_dict)
@@ -214,12 +214,11 @@ class QM9_srd_dataloader:
 
 class DiffusionDataloader:
     # TODO add dim_mask
-    def __init__(self, args_gen, model, nodes_dist, dims_dist, prop_dist, device, unkown_labels=False,
+    def __init__(self, args_gen, model, nodes_dist, prop_dist, device, unkown_labels=False,
                  batch_size=1, iterations=200):
         self.args_gen = args_gen
         self.model = model
         self.nodes_dist = nodes_dist
-        self.dims_dist = dims_dist
         self.prop_dist = prop_dist
         self.batch_size = batch_size
 #         self.batch_size = 1
@@ -245,7 +244,7 @@ class DiffusionDataloader:
                                                 self.dataset_info, self.prop_dist, nodesxsample=nodesxsample,
                                                 context=context)
         
-        dims_mask = torch.zeros((len(nodesxsample), self.dataset_info['max_n_dims']), device=x.device)
+        dims_mask = torch.zeros((len(nodesxsample), self.dataset_info['max_n_nodes']-1), device=x.device)
         for i in range(len(dimsxsample)):
             dims_mask[i, 0:dimsxsample[i]] = 1
         dims_mask = dims_mask.unsqueeze(1)
@@ -343,15 +342,13 @@ def main_quantitative(args):
     property_norms = compute_mean_mad(dataloaders, args_gen.conditioning, args_gen.dataset)
     model, nodes_dist, prop_dist, dataset_info = get_generator(args.generators_path, dataloaders,
                                                     args.device, args_gen, property_norms)
-    histogram = dataset_info['ranks'] 
-    dims_dist = DistributionNodes(histogram)
 
     # Create a dataloader with the generator
 
     mean, mad = property_norms[args.property]['mean'], property_norms[args.property]['mad']
 
     if args.task == 'edm':
-        diffusion_dataloader = DiffusionDataloader(args_gen, model, nodes_dist, dims_dist, prop_dist,
+        diffusion_dataloader = DiffusionDataloader(args_gen, model, nodes_dist, prop_dist,
                                                    args.device, batch_size=args.batch_size, iterations=args.iterations)
         print("EDM: We evaluate the classifier on our generated samples")
         loss = test(classifier, 0, diffusion_dataloader, mean, mad, args.property, args.device, 1, args.debug_break)

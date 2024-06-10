@@ -312,7 +312,6 @@ class EnVariationalDiffusion(torch.nn.Module):
     def phi(self, x, t, node_mask, edge_mask, context, dim_mask=None):
         net_out = self.dynamics._forward(t, x, node_mask, edge_mask, context)
 
-        # TODO bug?
         if dim_mask is not None:
             net_out[:, :, :dim_mask.shape[-1]] *= dim_mask
         return net_out
