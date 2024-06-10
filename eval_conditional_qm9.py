@@ -253,8 +253,8 @@ class DiffusionDataloader:
         atom_types = one_hot.argmax(dim=2)
         # TODO convert srd positions to real positions
 #         print(x)
-        print('adj')
-        print(inverse_SRD(x))
+        # print('adj')
+        # print(inverse_SRD(x))
         smiles = srd_to_smiles(x, node_mask, atom_types)
         
         print(smiles)
@@ -265,15 +265,18 @@ class DiffusionDataloader:
         for i in range(self.batch_size):
 #             print(smiles[i])
             # todo: test
-            if smiles[i] is None or '.' in smiles[i]:
-#             if smiles[i] is None:
+            # if smiles[i] is None or '.' in smiles[i]:
+            if smiles[i] is None:
                 unvalid_flag[i] = True
             else:
                 position, tmp_one_hot = smile_to_xyz(smiles[i])
                 if position is None:
                     unvalid_flag[i] = True
+                elif position.size(0) > self.dataset_info['max_n_nodes']:  
+                    print('too many nodes', position.size(0))
                 else:
-                    assert(position.size(0) <= self.dataset_info['max_n_nodes'])
+                    # print(position.size(0))
+                    # assert(position.size(0) <= self.dataset_info['max_n_nodes'])
                     positions[i, 0:position.size(0)] = position
                     one_hot[i, 0:position.size(0)] = tmp_one_hot
 

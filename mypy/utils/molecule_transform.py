@@ -42,7 +42,12 @@ def SRD(adj: torch.Tensor, N: int=29, D:int=28) -> torch.Tensor:
     assert(torch.dist(ret @ ret.t(), L) < 1e-4)
     return  ret
 
-def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor, remove_h: bool) -> Tuple[torch.Tensor, torch.Tensor]:
+    if remove_h:
+        no_h_index = atom_types != 0
+        adjacency = adjacency[no_h_index][:, no_h_index]
+        atom_types = atom_types[no_h_index]    
+
     valence_dict = [1, 4, 3, 2, 1]
     valences = torch.zeros_like(atom_types, dtype=torch.int8)
     legal_valence = torch.zeros_like(adjacency, dtype=torch.int8)
@@ -52,33 +57,29 @@ def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Tuple
         atom_type = atom_types[i]
         valences[i] = valence_dict[atom_type.item()]
         adjacency[i, i] = -inf
+        
+    n = len(adjacency)
+    while True:
+        index_1d, max_val = torch.argmax(adjacency).item(), torch.max(adjacency).item()
+        if max_val < 0.5: 
+            break
 
-    sorted_indices = torch.argsort(valences, descending=True)
-    valences = valences[sorted_indices]
-    atom_types = atom_types[sorted_indices]
-    adjacency = adjacency[sorted_indices, :][:, sorted_indices]
-
-    for i in range(adjacency.size(0)):
-#         unit = adjacency[i].topk(valences[i]).values.sum() / valences[i]
-        unit = 1
-
-        while valences[i] > 0:
-            p = torch.max(adjacency[i], dim=0).indices
-            adjacency[i, p] -= unit
-
-            if p == i or adjacency[i, p] < - unit + 0.5:
-                break
-            if valences[p] > 0 and legal_valence[i, p] < 3:
-                valences[i] -= 1
-                valences[p] -= 1
-                legal_valence[i, p] += 1
-                legal_valence[p, i] += 1
-            else:
-                adjacency[i, p] = -inf
+        r, c = index_1d // n, index_1d % n
+        adjacency[r, c] -= 1
+        adjacency[c, r] -= 1
+        
+        if valences[r] > 0 and valences[c] > 0 and legal_valence[r, c] < 3:
+            valences[r] -= 1
+            valences[c] -= 1
+            legal_valence[r, c] += 1
+            legal_valence[c, r] += 1
+        else:
+            adjacency[r, c] = -inf
+            adjacency[c, r] = -inf
 
     return legal_valence, atom_types
 
-def srd_to_smiles(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.Tensor) -> List[str]:
+def srd_to_smiles(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.Tensor, remove_h: bool=True) -> List[str]:
     # srd: B * N * D
     # node_mask: B * N
     # atom_types: B * N
@@ -91,7 +92,7 @@ def srd_to_smiles(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.
     for i in range(adjs.shape[0]):
         adj = adjs[i, :node_num[i], :node_num[i]]
         atom_type = atom_types[i, :node_num[i]]
-        adj, atom_type = legalize_valence(adj, atom_type)
+        adj, atom_type = legalize_valence(adj, atom_type, remove_h=remove_h)
         mol = build_molecule(adj, atom_type)
 
         try:
@@ -99,6 +100,7 @@ def srd_to_smiles(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.
         except ValueError:
             smile = None
         else:
+            mol = Chem.RemoveHs(mol)
             smile = Chem.MolToSmiles(mol)
         smiles.append(smile)
 
