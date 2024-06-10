@@ -35,7 +35,7 @@ def split_dataset(data, split_idxs):
 # def save_database()
 
 
-def process_xyz_files(data, process_file_fn, file_ext=None, file_idx_list=None, stack=True):
+def process_xyz_files(data, process_file_fn, file_ext=None, file_idx_list=None, stack=True, remove_h=False):
     """
     Take a set of datafiles and apply a predefined data processing script to each
     one. Data can be stored in a directory, tarfile, or zipfile. An optional
@@ -89,7 +89,7 @@ def process_xyz_files(data, process_file_fn, file_ext=None, file_idx_list=None, 
 
     for file in files:
         with readfile(file) as openfile:
-            molecules.append(process_file_fn(openfile))
+            molecules.append(process_file_fn(openfile, remove_h))
 
     # Check that all molecules have the same set of items in their dictionary:
     props = molecules[0].keys()
@@ -160,7 +160,7 @@ def process_xyz_md17(datafile):
     return molecule
 
 
-def process_xyz_gdb9(datafile):
+def process_xyz_gdb9(datafile, remove_h):
     """
     Read xyz file and return a molecular dict with number of atoms, energy, forces, coordinates and atom-type for the gdb9 dataset.
 
@@ -188,8 +188,11 @@ def process_xyz_gdb9(datafile):
     atom_charges, atom_positions = [], []
     for line in mol_xyz:
         atom, posx, posy, posz, _ = line.replace('*^', 'e').split()
+        if remove_h and atom == 'H':
+            continue
         atom_charges.append(charge_dict[atom])
         atom_positions.append([float(posx), float(posy), float(posz)])
+    num_atoms = len(atom_charges)
 
     prop_strings = ['tag', 'index', 'A', 'B', 'C', 'mu', 'alpha', 'homo', 'lumo', 'gap', 'r2', 'zpve', 'U0', 'U', 'H', 'G', 'Cv']
     prop_strings = prop_strings[1:]

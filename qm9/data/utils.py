@@ -57,7 +57,7 @@ def initialize_datasets(args, datadir, dataset, subset=None, splits=None,
 
     # Download and process dataset. Returns datafiles.
     datafiles = prepare_dataset(
-        datadir, 'qm9', subset, splits, force_download=force_download)
+        datadir, 'qm9_no_h' if remove_h else 'qm9', subset, splits, force_download=force_download, remove_h=remove_h)
 
     # Load downloaded/processed datasets
     datasets = {}
@@ -94,30 +94,30 @@ def initialize_datasets(args, datadir, dataset, subset=None, splits=None,
                ), 'Datasets must have same set of keys!'
 
     # TODO: remove hydrogens here if needed
-    if remove_h:
-        for key, dataset in datasets.items():
-            pos = dataset['positions']
-            charges = dataset['charges']
-            num_atoms = dataset['num_atoms']
+    # if remove_h:
+    #     for key, dataset in datasets.items():
+    #         pos = dataset['positions']
+    #         charges = dataset['charges']
+    #         num_atoms = dataset['num_atoms']
 
-            # Check that charges corresponds to real atoms
-            assert torch.sum(num_atoms != torch.sum(charges > 0, dim=1)) == 0
+    #         # Check that charges corresponds to real atoms
+    #         assert torch.sum(num_atoms != torch.sum(charges > 0, dim=1)) == 0
 
-            mask = dataset['charges'] > 1
-            new_positions = torch.zeros_like(pos)
-            new_charges = torch.zeros_like(charges)
-            for i in range(new_positions.shape[0]):
-                m = mask[i]
-                p = pos[i][m]   # positions to keep
-                p = p - torch.mean(p, dim=0)    # Center the new positions
-                c = charges[i][m]   # Charges to keep
-                n = torch.sum(m)
-                new_positions[i, :n, :] = p
-                new_charges[i, :n] = c
+    #         mask = dataset['charges'] > 1
+    #         new_positions = torch.zeros_like(pos)
+    #         new_charges = torch.zeros_like(charges)
+    #         for i in range(new_positions.shape[0]):
+    #             m = mask[i]
+    #             p = pos[i][m]   # positions to keep
+    #             p = p - torch.mean(p, dim=0)    # Center the new positions
+    #             c = charges[i][m]   # Charges to keep
+    #             n = torch.sum(m)
+    #             new_positions[i, :n, :] = p
+    #             new_charges[i, :n] = c
 
-            dataset['positions'] = new_positions
-            dataset['charges'] = new_charges
-            dataset['num_atoms'] = torch.sum(dataset['charges'] > 0, dim=1)
+    #         dataset['positions'] = new_positions
+    #         dataset['charges'] = new_charges
+    #         dataset['num_atoms'] = torch.sum(dataset['charges'] > 0, dim=1)
 
     # Get a list of all species across the entire dataset
     all_species = _get_species(datasets, ignore_check=False)
