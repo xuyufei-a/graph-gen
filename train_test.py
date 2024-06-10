@@ -22,12 +22,13 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
     for i, data in enumerate(loader):
         # TODO: hang up
         # print(data.keys())
-        x = data['srd_positions'].to(device, dtype)
+        N = 9
+        x = data['srd_positions'].to(device, dtype)[:, :N, :N]
         node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
         edge_mask = data['edge_mask'].to(device, dtype)
         one_hot = data['one_hot'].to(device, dtype)
         # TODO: modify
-        dim_mask = data['dim_mask'].to(device, dtype).unsqueeze(1)
+        dim_mask = data['dim_mask'].to(device, dtype)[:, :9].unsqueeze(1)
         charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
         
 #         print(x, dim_mask, charges)

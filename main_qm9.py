@@ -190,7 +190,7 @@ args.context_node_nf = context_node_nf
 
 # Create EGNN flow
 # TODO
-model, nodes_dist, prop_dist = get_model(args, device, dataset_info, dataloaders['train'], n_dims=28)
+model, nodes_dist, prop_dist = get_model(args, device, dataset_info, dataloaders['train'], n_dims=9)
 if prop_dist is not None:
     prop_dist.set_normalizer(property_norms)
 model = model.to(device)
