@@ -25,17 +25,6 @@ def build_molecule(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Chem.Mo
     for bond in bonds:
         mol.AddBond(bond[0].item(), bond[1].item(), bond_dict[adjacency[bond[0], bond[1]].item()])
 
-
-    atoms_to_remove = []
-    for atom in mol.GetAtoms():
-        if atom.GetAtomicNum() == 1:
-            if len(atom.GetNeighbors()) == 0:
-                atoms_to_remove.append(atom.GetIdx())
-
-    for idx in sorted(atoms_to_remove, reverse=True):
-        mol.RemoveAtom(idx)
-
-
     return mol
 
 def SRD(adj: torch.Tensor, N: int=29, D:int=28) -> torch.Tensor:
@@ -53,7 +42,7 @@ def SRD(adj: torch.Tensor, N: int=29, D:int=28) -> torch.Tensor:
     assert(torch.dist(ret @ ret.t(), L) < 1e-4)
     return  ret
 
-def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor, remove_h: bool) -> Tuple[torch.Tensor, torch.Tensor]:
+def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor, remove_h: bool, thre: float=0.4) -> Tuple[torch.Tensor, torch.Tensor]:
     if remove_h:
         no_h_index = atom_types != 0
         adjacency = adjacency[no_h_index][:, no_h_index]
@@ -63,16 +52,16 @@ def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor, remove_h
     valences = torch.zeros_like(atom_types, dtype=torch.int8)
     legal_valence = torch.zeros_like(adjacency, dtype=torch.int8)
 
+    n = len(adjacency)
     inf = torch.tensor(float('inf')).to(adjacency.device)
-    for i in range(adjacency.size(0)):
+    for i in range(n):
         atom_type = atom_types[i]
         valences[i] = valence_dict[atom_type.item()]
         adjacency[i, i] = -inf
         
-    n = len(adjacency)
     while True:
         index_1d, max_val = torch.argmax(adjacency).item(), torch.max(adjacency).item()
-        if max_val < 0: 
+        if max_val < thre: 
             break
 
         r, c = index_1d // n, index_1d % n
