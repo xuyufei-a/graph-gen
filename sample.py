@@ -80,7 +80,8 @@ def sample_different_sizes_and_dims(args, eval_args, device, generative_model,
     # nodes_list: qm9.models.DistributionNodes
 
     nodesxsample = nodes_dist.sample(n_samples)
-    dimsxsample = dims_dist.sample(n_samples)
+#     dimsxsample = dims_dist.sample(n_samples)
+    dimsxsample = nodesxsample.clone() - 1
 
     dims_mask = torch.zeros((len(nodesxsample), eval_args.max_n_dims))
     for i in range(len(dimsxsample)):

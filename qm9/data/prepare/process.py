@@ -208,7 +208,7 @@ def process_xyz_gdb9(datafile):
     mol = Chem.AddHs(mol)
     adj = Chem.GetAdjacencyMatrix(mol)
 
-    srd_positions = torch.zeros(N, D)
+    srd_positions = torch.zeros(N, N)
     srd_positions[0:num_atoms, 0:num_atoms-1] = SRD(torch.tensor(adj, dtype=torch.float))
 
     rank = num_atoms - 1

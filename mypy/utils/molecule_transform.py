@@ -34,12 +34,8 @@ def SRD(adj: torch.Tensor, N: int=29, D:int=28) -> torch.Tensor:
     L = - adj + torch.diag(degree)
 
     val, vec = torch.linalg.eigh(L)
-
     val, vec = val[1:], vec[:, 1:]
 
-    sort_indices = torch.argsort(val, descending=True)
-    val = val[sort_indices]
-    vec = vec[:, sort_indices]
     val = val.clamp(0, None)
 
     ret = vec @ torch.diag(val ** 0.5)
