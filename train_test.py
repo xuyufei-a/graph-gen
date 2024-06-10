@@ -124,13 +124,13 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
         n_iterations = len(loader)
 
         for i, data in enumerate(loader):
-            x = data['srd_positions'].to(device, dtype)
+            x = data['srd_positions'].to(device, dtype)[:, :N, :N]
             batch_size = x.size(0)
             node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
             edge_mask = data['edge_mask'].to(device, dtype)
             one_hot = data['one_hot'].to(device, dtype)
             charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
-            dim_mask = data['dim_mask'].to(device, dtype).unsqueeze(1)
+            dim_mask = data['dim_mask'].to(device, dtype)[:, :9].unsqueeze(1)
             charges = charges
 
             if args.augment_noise > 0:
