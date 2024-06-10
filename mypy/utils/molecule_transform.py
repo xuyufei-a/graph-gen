@@ -25,6 +25,17 @@ def build_molecule(adjacency: torch.Tensor, atom_types: torch.Tensor) -> Chem.Mo
     for bond in bonds:
         mol.AddBond(bond[0].item(), bond[1].item(), bond_dict[adjacency[bond[0], bond[1]].item()])
 
+
+    atoms_to_remove = []
+    for atom in mol.GetAtoms():
+        if atom.GetAtomicNum() == 1:
+            if len(atom.GetNeighbors()) == 0:
+                atoms_to_remove.append(atom.GetIdx())
+
+    for idx in sorted(atoms_to_remove, reverse=True):
+        mol.RemoveAtom(idx)
+
+
     return mol
 
 def SRD(adj: torch.Tensor, N: int=29, D:int=28) -> torch.Tensor:
@@ -61,7 +72,7 @@ def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor, remove_h
     n = len(adjacency)
     while True:
         index_1d, max_val = torch.argmax(adjacency).item(), torch.max(adjacency).item()
-        if max_val < 0.5: 
+        if max_val < 0: 
             break
 
         r, c = index_1d // n, index_1d % n
@@ -79,7 +90,7 @@ def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor, remove_h
 
     return legal_valence, atom_types
 
-def srd_to_smiles(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.Tensor, remove_h: bool=True) -> List[str]:
+def srd_to_smiles(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.Tensor, remove_h: bool=False) -> List[str]:
     # srd: B * N * D
     # node_mask: B * N
     # atom_types: B * N

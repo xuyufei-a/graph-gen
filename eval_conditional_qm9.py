@@ -274,6 +274,7 @@ class DiffusionDataloader:
                     unvalid_flag[i] = True
                 elif position.size(0) > self.dataset_info['max_n_nodes']:  
                     print('too many nodes', position.size(0))
+                    unvalid_flag[i] = True
                 else:
                     # print(position.size(0))
                     # assert(position.size(0) <= self.dataset_info['max_n_nodes'])
