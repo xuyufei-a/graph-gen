@@ -252,9 +252,11 @@ class DiffusionDataloader:
 
         atom_types = one_hot.argmax(dim=2)
         # TODO convert srd positions to real positions
-        smiles = srd_to_smiles(x, node_mask, atom_types)
-        print('positions')
+#         print(x)
+        print('adj')
         print(inverse_SRD(x))
+        smiles = srd_to_smiles(x, node_mask, atom_types)
+        
         print(smiles)
 
         positions = torch.zeros((len(nodesxsample), self.dataset_info['max_n_nodes'], 3), device=x.device)
