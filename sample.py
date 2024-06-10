@@ -170,6 +170,7 @@ def main():
     parser.add_argument('--n_nodes', type=int, default=19,
                         help='number of atoms in molecule for gif animation')
     parser.add_argument('--n_samples', type=int, default=10)
+    parser.add_argument('--remove_h', action='store_true')
 
     eval_args, unparsed_args = parser.parse_known_args()
 

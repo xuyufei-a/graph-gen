@@ -184,6 +184,7 @@ def process_xyz_gdb9(datafile, remove_h):
     mol_props = xyz_lines[1].split()
     mol_xyz = xyz_lines[2:num_atoms+2]
     mol_freq = xyz_lines[num_atoms+2]
+    smiles = xyz_lines[num_atoms+3].split()[0]
 
     atom_charges, atom_positions = [], []
     for line in mol_xyz:
@@ -206,9 +207,7 @@ def process_xyz_gdb9(datafile, remove_h):
     N = 29
     D = N-1
 
-    smiles = xyz_lines[num_atoms+3].split()[0]
     mol = Chem.MolFromSmiles(smiles)
-    mol = Chem.AddHs(mol)
     adj = Chem.GetAdjacencyMatrix(mol)
 
     srd_positions = torch.zeros(N, N)
