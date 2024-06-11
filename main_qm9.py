@@ -232,7 +232,8 @@ def sample(args, device, model, dataset_info, node_dist, prop_dist):
 #         print(x)
         print('adj')
         adj = inverse_SRD(x)
-        print(adj)
+        for i in range(len(adj)):
+            print(adj[i])
         print('norm')
         print(adj.abs().max())
         
