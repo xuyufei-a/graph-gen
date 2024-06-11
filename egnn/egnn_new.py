@@ -83,7 +83,7 @@ class EquivariantUpdate(nn.Module):
         self.normalization_factor = normalization_factor
         self.aggregation_method = aggregation_method
 
-    # TODO
+
     def coord_model(self, h, coord, edge_index, coord_diff, edge_attr, edge_mask):
         row, col = edge_index
         input_tensor = torch.cat([h[row], h[col], edge_attr], dim=1)
@@ -174,7 +174,7 @@ class EGNN(nn.Module):
         self.norm_diff = norm_diff
         self.normalization_factor = normalization_factor
         self.aggregation_method = aggregation_method
-#         self.batch_norm = nn.BatchNorm1d(num_features=1)
+        self.batch_norm = nn.BatchNorm1d(num_features=1)
 
         if sin_embedding:
             self.sin_embedding = SinusoidsEmbeddingNew()
@@ -200,7 +200,7 @@ class EGNN(nn.Module):
         distances, _ = coord2diff(x, edge_index)
         if self.sin_embedding is not None:
             distances = self.sin_embedding(distances)
-        distances = self.batch_norm(distances)
+#         distances = self.batch_norm(distances)
         h = self.embedding(h)
         for i in range(0, self.n_layers):
             h, x = self._modules["e_block_%d" % i](h, x, edge_index, node_mask=node_mask, edge_mask=edge_mask, edge_attr=distances)
