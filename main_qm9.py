@@ -209,7 +209,7 @@ def check_mask_correct(variables, node_mask):
             assert_correctly_masked(variable, node_mask)
             
 def sample(args, device, model, dataset_info, node_dist, prop_dist):
-        batch_size = 1
+        batch_size = 11
         # TODO: dims_mask
         nodesxsample = nodes_dist.sample(batch_size)
         dimsxsample = nodesxsample.clone() - 1
@@ -234,7 +234,7 @@ def sample(args, device, model, dataset_info, node_dist, prop_dist):
         adj = inverse_SRD(x)
         print(adj)
         print('norm')
-        print(adj.abs().norm())
+        print(adj.abs().max())
         
 
 
