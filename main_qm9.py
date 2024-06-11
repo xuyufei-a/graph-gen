@@ -290,10 +290,10 @@ def main():
             nll_val = test(args=args, loader=dataloaders['valid'], epoch=epoch, eval_model=model_ema_dp,
                            partition='Val', device=device, dtype=dtype, nodes_dist=nodes_dist,
                            property_norms=property_norms)
-#             nll_test = test(args=args, loader=dataloaders['test'], epoch=epoch, eval_model=model_ema_dp,
-#                             partition='Test', device=device, dtype=dtype,
-#                             nodes_dist=nodes_dist, property_norms=property_norms)
-            nll_test = best_nll_test
+            nll_test = test(args=args, loader=dataloaders['test'], epoch=epoch, eval_model=model_ema_dp,
+                            partition='Test', device=device, dtype=dtype,
+                            nodes_dist=nodes_dist, property_norms=property_norms)
+#             nll_test = best_nll_test
             sample(args, device, model, dataset_info, nodes_dist, prop_dist)
             if nll_val < best_nll_val:
                 best_nll_val = nll_val
