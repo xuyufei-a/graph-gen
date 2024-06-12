@@ -3,7 +3,14 @@ from rdkit import Chem, RDLogger
 from rdkit.Chem import rdDistGeom, AllChem
 from typing import Tuple, List
 
-atam_decoder = ['H', 'C', 'N', 'O', 'F']
+remove_h = True
+if remove_h:
+    atam_decoder = ['C', 'N', 'O', 'F']
+    valence_dict = [4, 3, 2, 1]
+else:
+    atam_decoder = ['H', 'C', 'N', 'O', 'F']
+    valence_dict = [1, 4, 3, 2, 1]
+
 atom_encoder = {'H': 0, 'C': 1, 'N': 2, 'O': 3, 'F': 4}
 
 def inverse_SRD(x: torch.Tensor) -> torch.Tensor:
@@ -42,7 +49,7 @@ def SRD(adj: torch.Tensor, N: int=29, D:int=28) -> torch.Tensor:
     assert(torch.dist(ret @ ret.t(), L) < 1e-4)
     return  ret
 
-def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor, remove_h: bool, thre: float=0.6) -> Tuple[torch.Tensor, torch.Tensor]:
+def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor, remove_h: bool, thre: float=0.5) -> Tuple[torch.Tensor, torch.Tensor]:
     if remove_h:
         no_h_index = atom_types != 0
         adjacency = adjacency[no_h_index][:, no_h_index]
@@ -51,7 +58,6 @@ def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor, remove_h
 #     adjacency = torch.round(adjacency).to(dtype=torch.int32)
 #     return adjacency, atom_types
 
-    valence_dict = [1, 4, 3, 2, 1]
     valences = torch.zeros_like(atom_types, dtype=torch.int8)
     legal_valence = torch.zeros_like(adjacency, dtype=torch.int8)
 
@@ -119,17 +125,19 @@ def smile_to_xyz(smile: str) -> Tuple[torch.Tensor | None, torch.Tensor | None]:
         assert result != -1
     except:
         print(f"fail embedding on {smile}")
-        return None, None
+        return None, None, None
 
     AllChem.UFFOptimizeMolecule(mol)
     pos = mol.GetConformer().GetPositions()
     pos = torch.tensor(pos, dtype=torch.float)
     atom_types = [atom.GetSymbol() for atom in mol.GetAtoms()]
     one_hot = torch.zeros((pos.size(0), 5))
+    node_mask = torch.zeros((pos.size(0), 1))
     for i, atom_type in enumerate(atom_types):
         one_hot[i, atom_encoder[atom_type]] = 1
+        node_mask[i] = 1
 
-    return pos, one_hot
+    return pos, one_hot, node_mask
 
 #     from pyscf import gto, dft
 #     from pyscf.geomopt import geometric_solver

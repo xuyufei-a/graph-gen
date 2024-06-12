@@ -253,15 +253,25 @@ class DiffusionDataloader:
         atom_types = one_hot.argmax(dim=2)
         # TODO convert srd positions to real positions
 #         print(x)
-        print('adj')
         adj = inverse_SRD(x)
-        for i in range(len(adj)):
-            print(one_hot[i], adj[i])
         smiles = srd_to_smiles(x, node_mask, atom_types)
-        
-        print(smiles)
 
-        positions = torch.zeros((len(nodesxsample), self.dataset_info['max_n_nodes'], 3), device=x.device)
+        cnt = 0
+        for i in range(len(smiles)):
+            if '.' in smiles[i]:
+                cnt += 1
+        print(cnt)
+        # print('adj')
+        # for i in range(len(adj)):
+        #     print(one_hot[i], adj[i])
+        print(smiles)
+        
+        check_mask(x, node_mask, dims_mask)
+
+        N = 30
+        positions = torch.zeros((len(nodesxsample), N, 3), device=x.device)
+        one_hot = torch.zeros((len(nodesxsample), N, 5), device=x.device)
+        node_mask = torch.zeros((len(nodesxsample), N, 1), device=x.device)
         unvalid_flag = torch.zeros(len(nodesxsample), dtype=torch.bool, device=x.device)
 
         for i in range(self.batch_size):
@@ -271,19 +281,17 @@ class DiffusionDataloader:
             if smiles[i] is None:
                 unvalid_flag[i] = True
             else:
-                position, tmp_one_hot = smile_to_xyz(smiles[i])
+                position, tmp_one_hot, tmp_node_mask = smile_to_xyz(smiles[i])
                 if position is None:
                     unvalid_flag[i] = True
-                elif position.size(0) > self.dataset_info['max_n_nodes']:  
+                elif position.size(0) > N:  
                     print('too many nodes', position.size(0))
                     unvalid_flag[i] = True
                 else:
-                    # print(position.size(0))
-                    # assert(position.size(0) <= self.dataset_info['max_n_nodes'])
                     positions[i, 0:position.size(0)] = position
                     one_hot[i, 0:position.size(0)] = tmp_one_hot
+                    node_mask[i, 0:position.size(0)] = tmp_node_mask
 
-        check_mask(x, node_mask, dims_mask)
         node_mask = node_mask.squeeze(2)
 
         context = context.squeeze(1)
