@@ -42,11 +42,14 @@ def SRD(adj: torch.Tensor, N: int=29, D:int=28) -> torch.Tensor:
     assert(torch.dist(ret @ ret.t(), L) < 1e-4)
     return  ret
 
-def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor, remove_h: bool, thre: float=0.4) -> Tuple[torch.Tensor, torch.Tensor]:
+def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor, remove_h: bool, thre: float=0.6) -> Tuple[torch.Tensor, torch.Tensor]:
     if remove_h:
         no_h_index = atom_types != 0
         adjacency = adjacency[no_h_index][:, no_h_index]
         atom_types = atom_types[no_h_index]    
+        
+#     adjacency = torch.round(adjacency).to(dtype=torch.int32)
+#     return adjacency, atom_types
 
     valence_dict = [1, 4, 3, 2, 1]
     valences = torch.zeros_like(atom_types, dtype=torch.int8)

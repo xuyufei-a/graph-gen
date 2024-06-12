@@ -253,8 +253,10 @@ class DiffusionDataloader:
         atom_types = one_hot.argmax(dim=2)
         # TODO convert srd positions to real positions
 #         print(x)
-        # print('adj')
-        # print(inverse_SRD(x))
+        print('adj')
+        adj = inverse_SRD(x)
+        for i in range(len(adj)):
+            print(one_hot[i], adj[i])
         smiles = srd_to_smiles(x, node_mask, atom_types)
         
         print(smiles)

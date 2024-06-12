@@ -11,6 +11,7 @@ from configs.datasets_config import get_dataset_info
 from os.path import join
 from qm9 import dataset
 from qm9.models import get_optim, get_model
+from qm9 import sampling
 from equivariant_diffusion import en_diffusion
 from equivariant_diffusion.utils import assert_correctly_masked
 from equivariant_diffusion import utils as flow_utils
@@ -19,6 +20,7 @@ import time
 import pickle
 from qm9.utils import prepare_context, compute_mean_mad
 from train_test import train_epoch, test, analyze_and_save
+from mypy.utils.molecule_transform import smile_to_xyz, inverse_SRD, srd_to_smiles
 
 parser = argparse.ArgumentParser(description='E3Diffusion')
 parser.add_argument('--exp_name', type=str, default='debug_10')
@@ -190,7 +192,7 @@ args.context_node_nf = context_node_nf
 
 # Create EGNN flow
 # TODO
-model, nodes_dist, prop_dist = get_model(args, device, dataset_info, dataloaders['train'], n_dims=9)
+model, nodes_dist, prop_dist = get_model(args, device, dataset_info, dataloaders['train'], n_dims=dataset_info['max_n_nodes'])
 if prop_dist is not None:
     prop_dist.set_normalizer(property_norms)
 model = model.to(device)
@@ -205,6 +207,39 @@ def check_mask_correct(variables, node_mask):
     for variable in variables:
         if len(variable) > 0:
             assert_correctly_masked(variable, node_mask)
+            
+def sample(args, device, model, dataset_info, node_dist, prop_dist):
+        batch_size = 11
+        # TODO: dims_mask
+        nodesxsample = nodes_dist.sample(batch_size)
+        dimsxsample = nodesxsample.clone() - 1
+
+        # print(nodesxsample, dimsxsample)
+
+        context = prop_dist.sample_batch(nodesxsample).to(device)
+        one_hot, charges, x, node_mask = sampling.sample(args, device, model,
+                                                dataset_info, prop_dist, nodesxsample=nodesxsample,
+                                                context=context)
+        
+        dims_mask = torch.zeros((len(nodesxsample), dataset_info['max_n_nodes']-1), device=x.device)
+        for i in range(len(dimsxsample)):
+            dims_mask[i, 0:dimsxsample[i]] = 1
+        dims_mask = dims_mask.unsqueeze(1)
+        x = x * dims_mask
+
+        atom_types = one_hot.argmax(dim=2)
+        # TODO convert srd positions to real positions
+#         print(x)
+        print('adj')
+        adj = inverse_SRD(x)
+        for i in range(len(adj)):
+            print(adj[i])
+        print('norm')
+        print(adj.abs().max())
+        # atom_types = one_hot.argmax(dim=2)
+        # smiles = srd_to_smiles(x, node_mask, atom_types)
+        # print(smiles)
+        
 
 
 def main():
@@ -239,9 +274,7 @@ def main():
     best_nll_val = 1e8
     best_nll_test = 1e8
     
-#     for p in model.parameters():
-#         assert(p.is_cuda)
-#     args.break_train_epoch = True
+    torch.set_printoptions(precision=4, sci_mode=False)
     for epoch in range(args.start_epoch, args.n_epochs):
         start_epoch = time.time()
         train_epoch(args=args, loader=dataloaders['train'], epoch=epoch, model=model, model_dp=model_dp,
@@ -261,11 +294,11 @@ def main():
             nll_val = test(args=args, loader=dataloaders['valid'], epoch=epoch, eval_model=model_ema_dp,
                            partition='Val', device=device, dtype=dtype, nodes_dist=nodes_dist,
                            property_norms=property_norms)
-#             nll_test = test(args=args, loader=dataloaders['test'], epoch=epoch, eval_model=model_ema_dp,
-#                             partition='Test', device=device, dtype=dtype,
-#                             nodes_dist=nodes_dist, property_norms=property_norms)
-            nll_test = best_nll_test
-
+            nll_test = test(args=args, loader=dataloaders['test'], epoch=epoch, eval_model=model_ema_dp,
+                            partition='Test', device=device, dtype=dtype,
+                            nodes_dist=nodes_dist, property_norms=property_norms)
+#             nll_test = best_nll_test
+            sample(args, device, model, dataset_info, nodes_dist, prop_dist)
             if nll_val < best_nll_val:
                 best_nll_val = nll_val
                 best_nll_test = nll_test
