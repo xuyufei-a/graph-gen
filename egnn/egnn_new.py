@@ -130,7 +130,7 @@ class EquivariantBlock(nn.Module):
         self.sin_embedding = sin_embedding
         self.normalization_factor = normalization_factor
         self.aggregation_method = aggregation_method
-        self.batch_norm = nn.BatchNorm1d(num_features=1)
+#         self.batch_norm = nn.BatchNorm1d(num_features=1)
 
         for i in range(0, n_layers):
             self.add_module("gcl_%d" % i, GCL(self.hidden_nf, self.hidden_nf, self.hidden_nf, edges_in_d=edge_feat_nf,
@@ -146,7 +146,7 @@ class EquivariantBlock(nn.Module):
     def forward(self, h, x, edge_index, node_mask=None, edge_mask=None, edge_attr=None):
         # Edit Emiel: Remove velocity as input
         distances, coord_diff = coord2diff(x, edge_index, self.norm_constant)
-        distances = self.batch_norm(distances)
+#         distances = self.batch_norm(distances)
         if self.sin_embedding is not None:
             distances = self.sin_embedding(distances)
         edge_attr = torch.cat([distances, edge_attr], dim=1)
@@ -174,7 +174,7 @@ class EGNN(nn.Module):
         self.norm_diff = norm_diff
         self.normalization_factor = normalization_factor
         self.aggregation_method = aggregation_method
-        self.batch_norm = nn.BatchNorm1d(num_features=1)
+#         self.batch_norm = nn.BatchNorm1d(num_features=1)
 
         if sin_embedding:
             self.sin_embedding = SinusoidsEmbeddingNew()
@@ -198,7 +198,7 @@ class EGNN(nn.Module):
     def forward(self, h, x, edge_index, node_mask=None, edge_mask=None):
         # Edit Emiel: Remove velocity as input
         distances, _ = coord2diff(x, edge_index)
-        distances = self.batch_norm(distances)
+#         distances = self.batch_norm(distances)
         if self.sin_embedding is not None:
             distances = self.sin_embedding(distances)
         h = self.embedding(h)

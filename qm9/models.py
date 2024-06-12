@@ -55,7 +55,7 @@ def get_optim(args, generative_model):
     optim = torch.optim.AdamW(
         generative_model.parameters(),
         lr=args.lr, amsgrad=True,
-        weight_decay=1e-12)
+        weight_decay=1e-1)
 
     return optim
 

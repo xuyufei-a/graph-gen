@@ -20,7 +20,7 @@ import time
 import pickle
 from qm9.utils import prepare_context, compute_mean_mad
 from train_test import train_epoch, test, analyze_and_save
-from mypy.utils.molecule_transform import smile_to_xyz, inverse_SRD
+from mypy.utils.molecule_transform import smile_to_xyz, inverse_SRD, srd_to_smiles
 
 parser = argparse.ArgumentParser(description='E3Diffusion')
 parser.add_argument('--exp_name', type=str, default='debug_10')
@@ -192,7 +192,7 @@ args.context_node_nf = context_node_nf
 
 # Create EGNN flow
 # TODO
-model, nodes_dist, prop_dist = get_model(args, device, dataset_info, dataloaders['train'], n_dims=28)
+model, nodes_dist, prop_dist = get_model(args, device, dataset_info, dataloaders['train'], n_dims=dataset_info['max_n_nodes'])
 if prop_dist is not None:
     prop_dist.set_normalizer(property_norms)
 model = model.to(device)
@@ -236,6 +236,9 @@ def sample(args, device, model, dataset_info, node_dist, prop_dist):
             print(adj[i])
         print('norm')
         print(adj.abs().max())
+        # atom_types = one_hot.argmax(dim=2)
+        # smiles = srd_to_smiles(x, node_mask, atom_types)
+        # print(smiles)
         
 
 
