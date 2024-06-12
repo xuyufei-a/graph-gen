@@ -221,7 +221,7 @@ def sample(args, device, model, dataset_info, node_dist, prop_dist):
                                                 dataset_info, prop_dist, nodesxsample=nodesxsample,
                                                 context=context)
         
-        dims_mask = torch.zeros((len(nodesxsample), dataset_info['max_n_nodes']-1), device=x.device)
+        dims_mask = torch.zeros((len(nodesxsample), dataset_info['max_n_nodes']), device=x.device)
         for i in range(len(dimsxsample)):
             dims_mask[i, 0:dimsxsample[i]] = 1
         dims_mask = dims_mask.unsqueeze(1)
