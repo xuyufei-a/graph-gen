@@ -49,7 +49,76 @@ def SRD(adj: torch.Tensor, N: int=29, D:int=28) -> torch.Tensor:
     assert(torch.dist(ret @ ret.t(), L) < 1e-4)
     return  ret
 
-def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor, remove_h: bool, thre: float=0.5) -> Tuple[torch.Tensor, torch.Tensor]:
+def legalize_valence(adjacency: torch.Tensor, atom_types: torch.Tensor, remove_h: bool, thre1: float=0.5, thre2: float=-0.5) -> Tuple[torch.Tensor, torch.Tensor]:
+    if remove_h:
+        no_h_index = atom_types != 0
+        adjacency = adjacency[no_h_index][:, no_h_index]
+        atom_types = atom_types[no_h_index]    
+
+    valences = torch.zeros_like(atom_types, dtype=torch.int8)
+    legal_valence = torch.zeros_like(adjacency, dtype=torch.int8)
+
+    n = len(adjacency)
+    inf = torch.tensor(float('inf')).to(adjacency.device)
+    for i in range(n):
+        atom_type = atom_types[i]
+        valences[i] = valence_dict[atom_type.item()]
+        adjacency[i, i] = -inf
+    
+    fa = [i for i in range(n)]
+    cnt = n - 1
+    def find_fa(x: int) -> int:
+        if x == fa[x]:
+            return x
+        fa[x] = find_fa(fa[x])
+        return fa[x]
+    
+    adjacency_tmp = adjacency.clone()
+
+    while cnt > 0:
+        index_1d, max_val = torch.argmax(adjacency_tmp).item(), torch.max(adjacency_tmp).item()
+        if max_val < thre2:
+            print(f'Warning: unconnected molecule for threshold {thre2}') 
+            break
+
+        r, c = index_1d // n, index_1d % n
+
+        if find_fa(r) != find_fa(c) and valences[r] > 0 and valences[c] > 0 and legal_valence[r, c] < 3:
+            adjacency_tmp[r, c] -= 1
+            adjacency_tmp[c, r] -= 1
+            valences[r] -= 1
+            valences[c] -= 1
+            legal_valence[r, c] += 1
+            legal_valence[c, r] += 1
+
+            fa[fa[r]] = fa[c]
+            cnt -= 1
+        else:
+            adjacency_tmp[r, c] = -inf
+            adjacency_tmp[c, r] = -inf
+
+    adjacency -= legal_valence
+    while True:
+        index_1d, max_val = torch.argmax(adjacency).item(), torch.max(adjacency).item()
+        if max_val < thre1: 
+            break
+
+        r, c = index_1d // n, index_1d % n
+        adjacency[r, c] -= 1
+        adjacency[c, r] -= 1
+        
+        if valences[r] > 0 and valences[c] > 0 and legal_valence[r, c] < 3:
+            valences[r] -= 1
+            valences[c] -= 1
+            legal_valence[r, c] += 1
+            legal_valence[c, r] += 1
+        else:
+            adjacency[r, c] = -inf
+            adjacency[c, r] = -inf
+
+    return legal_valence, atom_types
+
+def legalize_valence_old(adjacency: torch.Tensor, atom_types: torch.Tensor, remove_h: bool, thre: float=0.5) -> Tuple[torch.Tensor, torch.Tensor]:
     if remove_h:
         no_h_index = atom_types != 0
         adjacency = adjacency[no_h_index][:, no_h_index]

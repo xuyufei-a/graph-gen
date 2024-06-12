@@ -256,6 +256,7 @@ class DiffusionDataloader:
         adj = inverse_SRD(x)
         smiles = srd_to_smiles(x, node_mask, atom_types)
 
+        print(smiles)
         cnt = 0
         for i in range(len(smiles)):
             if '.' in smiles[i]:
@@ -264,7 +265,6 @@ class DiffusionDataloader:
         # print('adj')
         # for i in range(len(adj)):
         #     print(one_hot[i], adj[i])
-        print(smiles)
         
         check_mask(x, node_mask, dims_mask)
 
@@ -380,12 +380,12 @@ def main_quantitative(args):
         loss = test(classifier, 0, dataloader, mean, mad, args.property, args.device, args.log_interval,
                     args.debug_break)
         print("Loss classifier on srd_qm9: %.4f" % loss)
-    elif args.task == 'my_qm9':
-        print("my qm9")
-        dataloader = QM9_dataloader(args)
-        loss = test(classifier, 0, dataloader, mean, mad, args.property, args.device, args.log_interval,
-                    args.debug_break)
-        print("Loss classifier on my_qm9: %.4f" % loss)
+    # elif args.task == 'my_qm9':
+    #     print("my qm9")
+    #     dataloader = QM9_dataloader(args)
+    #     loss = test(classifier, 0, dataloader, mean, mad, args.property, args.device, args.log_interval,
+    #                 args.debug_break)
+    #     print("Loss classifier on my_qm9: %.4f" % loss)
 
 
 
