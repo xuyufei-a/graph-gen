@@ -146,9 +146,9 @@ class EquivariantBlock(nn.Module):
     def forward(self, h, x, edge_index, node_mask=None, edge_mask=None, edge_attr=None):
         # Edit Emiel: Remove velocity as input
         distances, coord_diff = coord2diff(x, edge_index, self.norm_constant)
+        distances = self.batch_norm(distances)
         if self.sin_embedding is not None:
             distances = self.sin_embedding(distances)
-#         distances = self.batch_norm(distances)
         edge_attr = torch.cat([distances, edge_attr], dim=1)
         for i in range(0, self.n_layers):
             h, _ = self._modules["gcl_%d" % i](h, edge_index, edge_attr=edge_attr, node_mask=node_mask, edge_mask=edge_mask)
@@ -198,9 +198,9 @@ class EGNN(nn.Module):
     def forward(self, h, x, edge_index, node_mask=None, edge_mask=None):
         # Edit Emiel: Remove velocity as input
         distances, _ = coord2diff(x, edge_index)
+        distances = self.batch_norm(distances)
         if self.sin_embedding is not None:
             distances = self.sin_embedding(distances)
-#         distances = self.batch_norm(distances)
         h = self.embedding(h)
         for i in range(0, self.n_layers):
             h, x = self._modules["e_block_%d" % i](h, x, edge_index, node_mask=node_mask, edge_mask=edge_mask, edge_attr=distances)
@@ -267,8 +267,10 @@ def coord2diff(x, edge_index, norm_constant=1):
 #     coord_diff = x[row] - x[col]
 #     norm = torch.sqrt(torch.sum((coord_diff) ** 2, 1).unsqueeze(1) + 1e-8)
 #     coord_diff = coord_diff/(norm + norm_constant)
-
-    coord_diff = x[col]
+    
+    # tmp
+    n = 29
+    coord_diff = x[col] / ((n - 1) ** 0.5)
     radial = torch.sum(x[row] * x[col], 1).unsqueeze(1)
     coord_diff = coord_diff
 
