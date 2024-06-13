@@ -166,6 +166,7 @@ def main():
     if rdkit_metrics is not None:
         rdkit_metrics = rdkit_metrics[0]
         print("Validity %.4f, Uniqueness: %.4f, Novelty: %.4f" % (rdkit_metrics[0], rdkit_metrics[1], rdkit_metrics[2]))
+        exit()
     else:
         print("Install rdkit roolkit to obtain Validity, Uniqueness, Novelty")
 

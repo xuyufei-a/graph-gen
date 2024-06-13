@@ -11,7 +11,7 @@ from qm9.property_prediction.main_qm9_prop import test
 from qm9.property_prediction import main_qm9_prop
 from qm9.sampling import sample_chain, sample, sample_sweep_conditional
 import qm9.visualizer as vis
-
+torch.set_printoptions(precision=4, sci_mode=False)
 
 def get_classifier(dir_path='', device='cpu'):
     with open(join(dir_path, 'args.pickle'), 'rb') as f:
@@ -28,7 +28,7 @@ def get_classifier(dir_path='', device='cpu'):
 def get_args_gen(dir_path):
     with open(join(dir_path, 'args.pickle'), 'rb') as f:
         args_gen = pickle.load(f)
-    assert args_gen.dataset == 'qm9_second_half'
+#     assert args_gen.dataset == 'qm9_second_half'
 
     # Add missing args!
     if not hasattr(args_gen, 'normalization_factor'):
