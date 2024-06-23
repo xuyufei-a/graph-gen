@@ -172,14 +172,17 @@ def srd_to_smiles(srd: torch.Tensor, node_mask: torch.Tensor, atom_types: torch.
         atom_type = atom_types[i, :node_num[i]]
         adj, atom_type = legalize_valence(adj, atom_type, remove_h=remove_h)
         mol = build_molecule(adj, atom_type)
-
-        try:
-            Chem.SanitizeMol(mol)
-        except ValueError:
+        
+        if adj.max().item() > 10:
             smile = None
         else:
-            mol = Chem.RemoveHs(mol)
-            smile = Chem.MolToSmiles(mol)
+            try:
+                Chem.SanitizeMol(mol)
+            except ValueError:
+                smile = None
+            else:
+                mol = Chem.RemoveHs(mol)
+                smile = Chem.MolToSmiles(mol)
         smiles.append(smile)
 
     return smiles

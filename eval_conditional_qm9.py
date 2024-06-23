@@ -239,16 +239,19 @@ class DiffusionDataloader:
 
         # print(nodesxsample, dimsxsample)
 
-        context = self.prop_dist.sample_batch(nodesxsample).to(self.device)
-        one_hot, charges, x, node_mask = sample(self.args_gen, self.device, self.model,
-                                                self.dataset_info, self.prop_dist, nodesxsample=nodesxsample,
-                                                context=context)
+        context = self.prop_dist.sample_batch(nodesxsample).to(self.device) 
         
-        dims_mask = torch.zeros((len(nodesxsample), self.dataset_info['max_n_nodes']-1), device=x.device)
+        dims_mask = torch.zeros((len(nodesxsample), self.dataset_info['max_n_nodes']-1), device=self.device)
         for i in range(len(dimsxsample)):
             dims_mask[i, 0:dimsxsample[i]] = 1
         dims_mask = dims_mask.unsqueeze(1)
+        
+
+        one_hot, charges, x, node_mask = sample(self.args_gen, self.device, self.model,
+                                                self.dataset_info, self.prop_dist, nodesxsample=nodesxsample,
+                                                context=context, dim_mask=dims_mask)
         x = x * dims_mask
+       
 
         atom_types = one_hot.argmax(dim=2)
         # TODO convert srd positions to real positions

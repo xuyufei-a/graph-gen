@@ -100,8 +100,12 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
             loss = loss_l1(mad * pred + mean, label)
             loss2 = loss_l1((mad * pred + mean) * (~unvalid_flag), label * (~unvalid_flag))
 
-        res['loss'] += loss.item() * batch_size
-        res['counter'] += batch_size
+#         res['loss'] += loss.item() * batch_size
+#         res['counter'] += batch_size
+#         res['loss_arr'].append(loss.item())
+
+        res['loss'] += loss2.item() * batch_size
+        res['counter'] += batch_size - unvalid_flag.sum().item()
         res['loss_arr'].append(loss.item())
 
         prefix = ""
@@ -110,7 +114,7 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
         
         if i % log_interval == 0:
             torch.set_printoptions(precision=4, sci_mode=False)
-            print(prefix + "Epoch %d \t Iteration %d \t loss %.4f" % (epoch, i, sum(res['loss_arr'][-10:])/len(res['loss_arr'][-10:])))
+            print(prefix + "Epoch %d \t Iteration %d \t loss %.4f" % (epoch, i, res['loss'] / res['counter']))
 #             print(unvalid)
             # print(mad * pred + mean, label, loss.item())
             # print(unvalid_flag)

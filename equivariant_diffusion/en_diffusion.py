@@ -508,8 +508,9 @@ class EnVariationalDiffusion(torch.nn.Module):
 
         return degrees_of_freedom_x * (- log_sigma_x - 0.5 * np.log(2 * np.pi))
 
-    def sample_p_xh_given_z0(self, z0, node_mask, edge_mask, context, fix_noise=False):
+    def sample_p_xh_given_z0(self, z0, node_mask, edge_mask, context, fix_noise=False, dim_mask=None):
         """Samples x ~ p(x|z0)."""
+        assert dim_mask is not None
         zeros = torch.zeros(size=(z0.size(0), 1), device=z0.device)
         gamma_0 = self.gamma(zeros)
         # Computes sqrt(sigma_0^2 / alpha_0^2)
@@ -521,6 +522,7 @@ class EnVariationalDiffusion(torch.nn.Module):
         xh = self.sample_normal(mu=mu_x, sigma=sigma_x, node_mask=node_mask, fix_noise=fix_noise)
 
         x = xh[:, :, :self.n_dims]
+        x = x * dim_mask
 
         h_int = z0[:, :, -1:] if self.include_charges else torch.zeros(0).to(z0.device)
         x, h_cat, h_int = self.unnormalize(x, z0[:, :, self.n_dims:-1], h_int, node_mask)
@@ -748,7 +750,8 @@ class EnVariationalDiffusion(torch.nn.Module):
 
         return neg_log_pxh
 
-    def sample_p_zs_given_zt(self, s, t, zt, node_mask, edge_mask, context, fix_noise=False):
+    def sample_p_zs_given_zt(self, s, t, zt, node_mask, edge_mask, context, fix_noise=False, dim_mask=None):
+        assert dim_mask is not None
         """Samples from zs ~ p(zs | zt). Only used during sampling."""
         gamma_s = self.gamma(s)
         gamma_t = self.gamma(t)
@@ -776,7 +779,7 @@ class EnVariationalDiffusion(torch.nn.Module):
         # Project down to avoid numerical runaway of the center of gravity.
         zs = torch.cat(
             [diffusion_utils.remove_mean_with_mask(zs[:, :, :self.n_dims],
-                                                   node_mask),
+                                                   node_mask) * dim_mask,
              zs[:, :, self.n_dims:]], dim=2
         )
         return zs
@@ -798,15 +801,16 @@ class EnVariationalDiffusion(torch.nn.Module):
         return z
 
     @torch.no_grad()
-    def sample(self, n_samples, n_nodes, node_mask, edge_mask, context, fix_noise=False):
+    def sample(self, n_samples, n_nodes, node_mask, edge_mask, context, fix_noise=False, dim_mask=None):
         """
         Draw samples from the generative model.
         """
+        assert dim_mask is not None
         if fix_noise:
             # Noise is broadcasted over the batch axis, useful for visualizations.
-            z = self.sample_combined_position_feature_noise(1, n_nodes, node_mask)
+            z = self.sample_combined_position_feature_noise(1, n_nodes, node_mask, dim_mask)
         else:
-            z = self.sample_combined_position_feature_noise(n_samples, n_nodes, node_mask)
+            z = self.sample_combined_position_feature_noise(n_samples, n_nodes, node_mask, dim_mask)
 
         diffusion_utils.assert_mean_zero_with_mask(z[:, :, :self.n_dims], node_mask)
 
@@ -817,10 +821,10 @@ class EnVariationalDiffusion(torch.nn.Module):
             s_array = s_array / self.T
             t_array = t_array / self.T
 
-            z = self.sample_p_zs_given_zt(s_array, t_array, z, node_mask, edge_mask, context, fix_noise=fix_noise)
+            z = self.sample_p_zs_given_zt(s_array, t_array, z, node_mask, edge_mask, context, fix_noise=fix_noise, dim_mask=dim_mask)
 
         # Finally sample p(x, h | z_0).
-        x, h = self.sample_p_xh_given_z0(z, node_mask, edge_mask, context, fix_noise=fix_noise)
+        x, h = self.sample_p_xh_given_z0(z, node_mask, edge_mask, context, fix_noise=fix_noise, dim_mask=dim_mask)
 
         diffusion_utils.assert_mean_zero_with_mask(x, node_mask)
 
