@@ -318,6 +318,8 @@ class DiffusionDataloader:
             # TODO: tmp
             'dim_mask': dims_mask.squeeze(1).detach(),
             'smiles': smiles, 
+            'adj': adj,
+            'atom_types': atom_types,
             prop_key: context.detach()
         }
         return data

@@ -8,6 +8,7 @@ from qm9.property_prediction import prop_utils
 import json
 from qm9 import dataset, utils
 import pickle
+import numpy as np
 
 loss_l1 = nn.L1Loss()
 
@@ -121,36 +122,28 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
             print(tmp, loss.item(), loss2.item())
 
             dim_mask = data['dim_mask']
-            smiles = data['smiles']
             atom_nums = atom_mask.view(batch_size, n_nodes, -1).sum(dim=1)
             dim_nums = dim_mask.sum(dim=1)
 #             print(atom_nums, dim_nums)
 
             positions = data['positions']
-#             print(smiles)
-#             for i in range(tmp.shape[0]):
-            #     if (label[i] - 57.23).abs().item() < 0.1 and (positions[i, 0, 1] - 1.5):
-            #         print("position: ", positions[i])
-            #     if diff[i].item() > 6:
-            #         with open('bad_mol.txt', 'a') as f:
-            #             f.write(f'{(mad * pred + mean)[i].item()} {label[i].item()} {unvalid_flag[i].item()} {atom_nums[i].int().item()} {dim_nums[i].int().item()} {smiles[i]}\n')
+            
+            atom_types = data['atom_types']
+            adj = data['adj']
+            smiles = data['smiles']
 
+            # for i in range(diff.shape[0]):
+            #     if unvalid_flag[i]:
+            #         with open("unvalid.txt", "a") as f:
+            #             f.write(np.array2string(atom_types[i].cpu().numpy(), separator=", ") + '\n')
+            #             f.write(np.array2string(adj[i].cpu().numpy(), separator=", ") + '\n')
+            #             f.write(smiles[i] + "\n")
+            #     elif diff[i].item() > 8:
+            #         with open("diff.txt", "a") as f:
+            #             f.write(np.array2string(atom_types[i].cpu().numpy(), separator=", ") + '\n')
+            #             f.write(np.array2string(adj[i].cpu().numpy(), separator=", ") + '\n')
+            #             f.write(smiles[i] + f" {tmp[i][0]} {tmp[i][1]} {tmp[i][2]}\n") 
 
-
-#                 if '.' in smiles[i]:
-#                     with open('doubted_mol.txt', 'a') as f:
-#                         f.write(f'{smiles[i]} {tmp[i][0].item()}\n')
-# #                     print(smiles[i])
-# #                     print(atom_positions[i])
-#                 elif tmp[i].item() < 40:
-#                     with open('doubted_mol2.txt', 'a') as f:
-#                         f.write(f'{smiles[i]} {tmp[i].item()}\n')
-# #             if loss.item() > 500:
-# #                 with open('doubted_mol.txt', 'a') as f:
-# #                     f.write(data['smiles'][0] + '\n')
-# #                 print(atom_positions)
-# #                 print(atom_positions.shape)
-# #                 exit()
         if debug_break:
             break
     return res['loss'] / res['counter']

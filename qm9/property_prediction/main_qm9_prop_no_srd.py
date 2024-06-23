@@ -92,7 +92,12 @@ def train(model, epoch, loader, mean, mad, property, device, partition='train', 
         if i % log_interval == 0:
             print(prefix + "Epoch %d \t Iteration %d \t loss %.4f" % (epoch, i, sum(res['loss_arr'][-10:])/len(res['loss_arr'][-10:])))
             # TODO
-            print(mad * pred + mean, label, (mad * pred + mean).max().item() > 100)
+            tmp = mad * pred + mean
+            diff = (tmp - label).abs()
+
+            torch.set_printoptions(precision=2, sci_mode=False)
+            tmp = torch.stack([tmp, label, diff], dim=1)
+            print(tmp)
         if debug_break:
             break
     return res['loss'] / res['counter']

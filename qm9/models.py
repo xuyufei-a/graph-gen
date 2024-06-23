@@ -16,11 +16,14 @@ def get_model(args, device, dataset_info, dataloader_train, n_dims=3):
     if len(args.conditioning) > 0:
         prop_dist = DistributionProperty(dataloader_train, args.conditioning)
     
+    print(in_node_nf)
     if args.condition_time:
+        print('on time')
         dynamics_in_node_nf = in_node_nf + 1
     else:
         print('Warning: dynamics model is _not_ conditioned on time.')
         dynamics_in_node_nf = in_node_nf
+    print(dynamics_in_node_nf)
 
     net_dynamics = EGNN_dynamics_QM9(
         in_node_nf=dynamics_in_node_nf, context_node_nf=args.context_node_nf,
