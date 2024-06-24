@@ -311,12 +311,12 @@ class EnVariationalDiffusion(torch.nn.Module):
 
     def phi(self, x, t, node_mask, edge_mask, context, dim_mask=None):
         if dim_mask is not None:
-            x[:, :, :dim_mask.shape[-1]] = x[:, :, :dim_mask.shape[-1]] * dim_mask
+            assert (x[:, :, :dim_mask.shape[-1]] * (1 - dim_mask)).sum() < 1e-4
 
         net_out = self.dynamics._forward(t, x, node_mask, edge_mask, context)
 
         if dim_mask is not None:
-            assert (x[:, :, :dim_mask.shape[-1]] * (1 - dim_mask)).sum() < 1e-4
+            assert (net_out[:, :, :dim_mask.shape[-1]] * (1 - dim_mask)).sum() < 1e-4
         return net_out
 
     def inflate_batch_array(self, array, target):
@@ -825,9 +825,12 @@ class EnVariationalDiffusion(torch.nn.Module):
             t_array = t_array / self.T
 
             z = self.sample_p_zs_given_zt(s_array, t_array, z, node_mask, edge_mask, context, fix_noise=fix_noise, dim_mask=dim_mask)
+            assert (z[:, :, : dim_mask .shape[ - 1 ]] * ( 1 - dim_mask )).sum() < 1e-4
+            
 
         # Finally sample p(x, h | z_0).
         x, h = self.sample_p_xh_given_z0(z, node_mask, edge_mask, context, fix_noise=fix_noise, dim_mask=dim_mask)
+        assert (x * ( 1 - dim_mask )).sum() < 1e-4
 
         diffusion_utils.assert_mean_zero_with_mask(x, node_mask)
 
