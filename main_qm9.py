@@ -298,7 +298,7 @@ def main():
                             partition='Test', device=device, dtype=dtype,
                             nodes_dist=nodes_dist, property_norms=property_norms)
 #             nll_test = best_nll_test
-            sample(args, device, model, dataset_info, nodes_dist, prop_dist)
+            # sample(args, device, model, dataset_info, nodes_dist, prop_dist)
             if nll_val < best_nll_val:
                 best_nll_val = nll_val
                 best_nll_test = nll_test

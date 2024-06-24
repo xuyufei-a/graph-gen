@@ -310,10 +310,13 @@ class EnVariationalDiffusion(torch.nn.Module):
                 f'1 / norm_value = {1. / max_norm_value}')
 
     def phi(self, x, t, node_mask, edge_mask, context, dim_mask=None):
+        if dim_mask is not None:
+            x[:, :, :dim_mask.shape[-1]] = x[:, :, :dim_mask.shape[-1]] * dim_mask
+
         net_out = self.dynamics._forward(t, x, node_mask, edge_mask, context)
 
         if dim_mask is not None:
-            net_out[:, :, :dim_mask.shape[-1]] *= dim_mask
+            assert (x[:, :, :dim_mask.shape[-1]] * (1 - dim_mask)).sum() < 1e-4
         return net_out
 
     def inflate_batch_array(self, array, target):
@@ -763,7 +766,7 @@ class EnVariationalDiffusion(torch.nn.Module):
         sigma_t = self.sigma(gamma_t, target_tensor=zt)
 
         # Neural net prediction.
-        eps_t = self.phi(zt, t, node_mask, edge_mask, context)
+        eps_t = self.phi(zt, t, node_mask, edge_mask, context, dim_mask=dim_mask)
 
         # Compute mu for p(zs | zt).
         diffusion_utils.assert_mean_zero_with_mask(zt[:, :, :self.n_dims], node_mask)
