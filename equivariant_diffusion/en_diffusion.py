@@ -839,7 +839,8 @@ class EnVariationalDiffusion(torch.nn.Module):
             print(f'Warning cog drift with error {max_cog:.3f}. Projecting '
                   f'the positions down.')
             x = diffusion_utils.remove_mean_with_mask(x, node_mask)
-
+        
+        assert (x * ( 1 - dim_mask )).sum() < 1e-4
         return x, h
 
     @torch.no_grad()
