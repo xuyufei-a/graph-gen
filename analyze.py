@@ -69,20 +69,22 @@ def sample_different_sizes_and_dims(args, eval_args, device, generative_model,
     # nodes_list: qm9.models.DistributionNodes
 
     nodesxsample = nodes_dist.sample(n_samples)
-    dimsxsample = dims_dist.sample(n_samples)
+    # dimsxsample = dims_dist.sample(n_samples)
+    dimsxsample = nodesxsample.clone() - 1
 
-    dims_mask = torch.zeros((len(nodesxsample), eval_args.max_n_dims))
+    dims_mask = torch.zeros((len(nodesxsample), 8), device=device)
     for i in range(len(dimsxsample)):
         dims_mask[i, 0:dimsxsample[i]] = 1
+    dims_mask = dims_mask.unsqueeze(1)
     
     one_hot, charges, x, node_mask = sample(
         args, device, generative_model, dataset_info,
-        nodesxsample=nodesxsample)
+        nodesxsample=nodesxsample, dim_mask=dims_mask)
 
-    save_point_file(
-        join(eval_args.model_path, 'eval/molecules/'), one_hot, charges, x,
-        id_from=0, name='molecule', dataset_info=dataset_info,
-        node_mask=node_mask, dims_mask=dims_mask)
+    # save_point_file(
+    #     join(eval_args.model_path, 'eval/molecules/'), one_hot, charges, x,
+    #     id_from=0, name='molecule', dataset_info=dataset_info,
+    #     node_mask=node_mask, dims_mask=dims_mask)
     
     return one_hot, x, node_mask, dims_mask
 
@@ -99,7 +101,7 @@ def analyze_and_save(args, eval_args, device, generative_model,
                                         , nodes_dist, dims_dist, dataset_info, batch_size)
 
         node_nums = node_mask.sum(dim=1)
-        dim_nums = dims_mask.sum(dim=1)
+        dim_nums = dims_mask.squeeze(1).sum(dim=1)
 
         for j in range(batch_size):
             node_num = int(node_nums[j].item())
@@ -207,7 +209,7 @@ def main():
 
     # Load model
     eval_args.max_n_dims = 18
-    generative_model, nodes_dist, prop_dist = get_model(args, device, dataset_info, dataloaders['train'], n_dims=eval_args.max_n_dims)
+    generative_model, nodes_dist, prop_dist = get_model(args, device, dataset_info, dataloaders['train'], dataset_info['max_n_nodes'] - 1)
     if prop_dist is not None:
         property_norms = compute_mean_mad(dataloaders, args.conditioning, args.dataset)
         prop_dist.set_normalizer(property_norms)
@@ -218,10 +220,10 @@ def main():
     generative_model.load_state_dict(flow_state_dict)
 
     # Analyze validity, uniqueness and novelty
-    histogram = dataset_info['ranks'] 
-    dims_dist = DistributionNodes(histogram)
+    # histogram = dataset_info['ranks'] 
+    # dims_dist = DistributionNodes(histogram)
     rdkit_metrics = analyze_and_save(
-        args, eval_args, device, generative_model, nodes_dist, dims_dist,
+        args, eval_args, device, generative_model, nodes_dist, None,
         prop_dist, dataset_info, n_samples=eval_args.n_samples,
         batch_size=eval_args.batch_size_gen)
 

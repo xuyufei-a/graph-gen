@@ -76,20 +76,26 @@ def save_point_file(path, one_hot, charges, positions, dataset_info, id_from=0, 
 
 # TODO: my function
 def sample_different_sizes_and_dims(args, eval_args, device, generative_model,
-                                    nodes_dist, dims_dist, dataset_info, n_samples=10):
+                                    nodes_dist, prop_dist, dataset_info, n_samples=10):
     # nodes_list: qm9.models.DistributionNodes
 
     nodesxsample = nodes_dist.sample(n_samples)
 #     dimsxsample = dims_dist.sample(n_samples)
     dimsxsample = nodesxsample.clone() - 1
 
-    dims_mask = torch.zeros((len(nodesxsample), eval_args.max_n_dims))
+        # print(nodesxsample, dimsxsample)
+
+    context = prop_dist.sample_batch(nodesxsample).to(self.device) 
+
+    dims_mask = torch.zeros((len(nodesxsample), self.dataset_info['max_n_nodes']-1), device=self.device)
     for i in range(len(dimsxsample)):
         dims_mask[i, 0:dimsxsample[i]] = 1
+    dims_mask = dims_mask.unsqueeze(1)
+        
     
-    one_hot, charges, x, node_mask = sample(
-        args, device, generative_model, dataset_info,
-        nodesxsample=nodesxsample)
+    one_hot, charges, x, node_mask = sample(self.args_gen, self.device, self.model,
+                                                self.dataset_info, self.prop_dist, nodesxsample=nodesxsample,
+                                                context=context, dim_mask=dims_mask)
     
     torch.set_printoptions(precision=4, sci_mode=False)
     print('adj')
@@ -214,10 +220,10 @@ def main():
     flow.load_state_dict(flow_state_dict)
 
     # histogram = {i:1 for i in range(1, eval_args.max_n_dims + 1)}
-    histogram = dataset_info['ranks'] 
-    dims_dist = DistributionNodes(histogram)
+#     histogram = dataset_info['ranks'] 
+#     dims_dist = DistributionNodes(histogram)
     sample_different_sizes_and_dims(
-        args, eval_args, device, flow, nodes_dist, dims_dist=dims_dist,
+        args, eval_args, device, flow, nodes_dist, prop_dist,
         dataset_info=dataset_info, n_samples=eval_args.n_samples)
     print('finished')
 
